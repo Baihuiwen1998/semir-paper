@@ -570,9 +570,9 @@ class FeaturePrepare:
 
         self.data[ObjCoeffName.ORDER_DELAY_PUNISH] = 10
 
-        self.data[ObjCoeffName.ORDER_PRODUCT_OPT_PUNISH] = 10
+        # self.data[ObjCoeffName.ORDER_PRODUCT_OPT_PUNISH] = 10
 
-        self.data[ObjCoeffName.CAPACITY_AVERAGE_PUNISH] = 10
+        self.data[ObjCoeffName.CAPACITY_AVERAGE_PUNISH] = 100
 
         self.data[ObjCoeffName.SUPPLIER_LADDER_PUNISH] = 100
 

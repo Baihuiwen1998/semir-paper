@@ -36,10 +36,8 @@ class ModelAnalysis:
                 order_machine_date.update(self.result[LBBDResultName.SUB_RESULT][supplier][ResultName.ORDER_MACHINE_DATE])
             result[ResultName.ITEM_SUPPLIER] = item_supplier
             result[ResultName.ORDER_MACHINE_DATE] = order_machine_date
-            result[ResultName.POOL_CAPACITY_RATIO_UB] = self.result[LBBDResultName.MASTER_RESULT][
-                ResultName.POOL_CAPACITY_RATIO_UB]
-            result[ResultName.POOL_CAPACITY_RATIO_LB] = self.result[LBBDResultName.MASTER_RESULT][
-                ResultName.POOL_CAPACITY_RATIO_LB]
+            result[ResultName.POOL_CAPACITY_RATIO_AVG] = self.result[LBBDResultName.MASTER_RESULT][
+                ResultName.POOL_CAPACITY_RATIO_AVG]
             result[ResultName.SUPPLIER_CAPACITY_RATIO] = self.result[LBBDResultName.MASTER_RESULT][
                 ResultName.SUPPLIER_CAPACITY_RATIO]
             self.result = result
@@ -129,19 +127,10 @@ class ModelAnalysis:
                     return False, None
 
         # 池内的最大和最小产能规划达成率 和平均达成率
-        for pool in self.result[ResultName.POOL_CAPACITY_RATIO_UB]:
-            average_pool_capacity_ratio = sum(
-                self.result[ResultName.SUPPLIER_CAPACITY_RATIO][supplier] * sum([
-                    self.data[ParaName.MACHINE_CAPACITY_PLANNED_DICT].get((machine, month), 0)
-                    for machine in self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
-                    for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, [])])
-                for supplier in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]) / sum([
-                    self.data[ParaName.MACHINE_CAPACITY_PLANNED_DICT].get((machine, month), 0)
-                    for supplier in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]
-                    for machine in self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
-                    for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, [])])
-            logger.info(f"{pool}_的产能规划达成率，最高为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_UB][pool], '.4f')}_最低为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_LB][pool], '.4f')}_平均产能规划达成率为_{format(average_pool_capacity_ratio, '.4f')}")
-            finished_rate_list.append(f"{pool}_的产能规划达成率，最高为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_UB][pool], '.4f')}_最低为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_LB][pool], '.4f')}_平均产能规划达成率为_{format(average_pool_capacity_ratio, '.4f')}")
+        # 池内的最大和最小产能规划达成率 和平均达成率
+        for pool in self.result[ResultName.POOL_CAPACITY_RATIO_AVG]:
+            logger.info(f"{pool}_的平均产能规划达成率为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_AVG][pool], '.4f')}")
+            finished_rate_list.append(f"{pool}_的平均产能规划达成率为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_AVG][pool], '.4f')}")
 
 
         return True, finished_rate_list

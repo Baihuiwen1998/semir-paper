@@ -72,7 +72,7 @@ class ParamsMark:
     ALL_PARAMS_DICT = {MAX_ITERATION: 500,
                        MAX_RUNTIME: 10800,
                        SHARE_LEVEL: 2,
-                       CAPACITY_AVERAGE_OBJ: False,
+                       CAPACITY_AVERAGE_OBJ: True,
                        CAPACITY_LADDEL_OBJ: True,
                        NU_VAR: False,
                        MIP_GAP: 0.001

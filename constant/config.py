@@ -122,9 +122,9 @@ class VarName:
     """
     ALPHA = 'alpha'
     SUPPLIER_CAPACITY_RATIO = 'supplier_capacity_ratio'
-    POOL_CAPACITY_RATIO_LB = 'pool_capacity_ratio_lb'
-    POOL_CAPACITY_RATIO_UB = 'pool_capacity_ratio_ub'
+    POOL_CAPACITY_RATIO_AVG = 'pool_capacity_ratio_avg'
     POOLS_CAPACITY_RATIO_DELTA = 'pool_capacity_ratio_delta'
+    SUPPLIER_CAPACITY_RATIO_DELTA = 'supplier_capacity_ratio_delta'
     Z = 'z'
     HAT_Z = '\hat_z'                # 连续变量，\hat_z_{o,s,\hat_t} 表示订单o在供应商s处\hat_t月的产量
     NU = 'nu'                        # 0-1变量，nu_{m,hat_t}表示是否有\hat_t月产线m可生产款式被分配至该产线所属实体供应商
@@ -142,8 +142,7 @@ class ResultName:
     ITEM_SUPPLIER = 'item_supplier'
     ORDER_MACHINE_DATE = 'order_machine_date'
     SUPPLIER_CAPACITY_RATIO = 'supplier_capacity_ratio'
-    POOL_CAPACITY_RATIO_UB = 'pool_capacity_ratio_ub'
-    POOL_CAPACITY_RATIO_LB = 'pool_capacity_ratio_lb'
+    POOL_CAPACITY_RATIO_AVG = 'pool_capacity_ratio_avg'
 
 class LBBDResultName:
     MASTER_RESULT = 'master_result'         # 记录主问题的变量求解结果
@@ -154,8 +153,6 @@ class LBBDResultName:
     RUN_TIME = 'run_time'                   # 整体求解时间
     ITERATION = 'iteration'                 # 经过了多少次迭代
 
-class LBBDMasterDataName:
-    ITEM_ASSIGNMENT_BY_SUPPLIER_DICT = 'item_assignment_by_supplier_dict'
 
 class LBBDSubDataName:
     SUPPLIER = 'supplier'

@@ -60,8 +60,8 @@ class LogicBasedBenders:
             self.update_data()
 
             # 创建子问题进行可行性检验
-            for supplier in self.master_data[LBBDMasterDataName.ITEM_ASSIGNMENT_BY_SUPPLIER_DICT]:
-                sub_data = self.cal_sub_data(supplier, self.master_data[LBBDMasterDataName.ITEM_ASSIGNMENT_BY_SUPPLIER_DICT][supplier])
+            for supplier in self.master_data[ResultName.ITEM_SUPPLIER]:
+                sub_data = self.cal_sub_data(supplier, self.master_data[ResultName.ITEM_SUPPLIER][supplier])
                 sub_model = SubModel(self.data, sub_data)
                 sub_model.construct()
                 self.sub_models[supplier] = sub_model
