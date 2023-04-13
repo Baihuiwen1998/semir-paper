@@ -159,11 +159,11 @@ class LogicBasedBenders:
                 if_feasible = sub_model.solve(mode=1)
                 if not if_feasible:
                     # 不可行
-                    logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!")
-                    print('[', end='')
-                    for item in item_list:
-                        print(str(item), end=',')
-                    print(']')
+                    # logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!")
+                    # print('[', end='')
+                    # for item in item_list:
+                    #     print(str(item), end=',')
+                    # print(']')
                     item_list = sub_data_copy[LBBDSubDataName.ITEM_LIST]
                     all_feasible = False
                     idx -= 1
@@ -171,22 +171,5 @@ class LogicBasedBenders:
             if all_feasible or (len(item_list) == 1):
                 # 去掉所有款式都可行，则说明找到了令supplier 产生不可解的最小款组合方案
                 flag = False
-                # 将MIS放到其他supplier上进行测试
-                self.add_mis_to_other_suppliers(item_list, supplier)
         return item_list
 
-    def add_mis_to_other_suppliers(self, item_list, tested_supplier):
-        """
-        :param item_list:
-        :return:
-        """
-        for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
-            if supplier != tested_supplier:
-                filtered_item_list = set.intersection(set(item_list), set(self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][supplier]))
-                sub_data = self.cal_sub_data(supplier, filtered_item_list)
-                sub_model = SubModel(self.data, sub_data)
-                sub_model.construct()
-                self.sub_models[supplier] = sub_model
-                is_feasible = sub_model.solve(mode=1)
-                if not is_feasible:
-                    self.lbbd_cut_data[LBBDCutName.INFEASIBLE_ITEM_SET_LIST_BY_SUPPLIER_DICT][supplier].append(filtered_item_list)

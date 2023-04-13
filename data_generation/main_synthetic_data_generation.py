@@ -25,9 +25,9 @@ formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
 logger = logging.getLogger(__name__)
 
-ITEM_NUM_DICT = {"A": [8, 10], "B": [30, 40], "C": [80, 100], "D": [200, 300]}
-ORDER_NUM_DICT = {"A": 30, "B": 150, "C": 300, "D": 900}
-SUPPLIER_NUM_DICT = {"A": [3, 4], "B": [10, 20], "C": [10, 20], "D": [20, 30]}
+ITEM_NUM_DICT = {"A": [8, 10], "B": [30, 40], "C_DONE_1": [80, 100], "D": [200, 300]}
+ORDER_NUM_DICT = {"A": 30, "B": 150, "C_DONE_1": 300, "D": 900}
+SUPPLIER_NUM_DICT = {"A": [3, 4], "B": [10, 20], "C_DONE_1": [10, 20], "D": [20, 30]}
 
 
 def gen_instances(data, set_size):
@@ -83,7 +83,7 @@ def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir + "data/input/desensitized_data/"
     output_desensitized_dir = ori_dir + "data/input/synthetic_data/"
-    for set_size in ["A", "B", "C", "D"]:
+    for set_size in ["A", "B", "C_DONE_1", "D"]:
         item_num_sum = 0
         order_num_sum = 0
         supplier_num_sum = 0

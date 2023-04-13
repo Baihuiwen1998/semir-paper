@@ -18,7 +18,7 @@ def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir + "data/input/synthetic_data/"
     output_dir = ori_dir+"data/output/MIP/"
-    size_set = ["A", "B", "C", "D"]
+    size_set = ["A", "B", "C_DONE_1", "D"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1,  1, 1, 1, 1,1, 1, 1, 1,  1, 1,  1,  1, 1))

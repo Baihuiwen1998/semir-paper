@@ -364,7 +364,7 @@ class FeaturePrepare:
                                     and machine_label_dict[machine][
                                         MachineHeader.CHANNEL] == item_label_dict[item][ItemHeader.CHANNEL]
                                     ]
-            elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 1:
+            elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 2:
                 # 按照item_category和渠道分
                 possible_supplier = [supplier
                                      for supplier in self.data[DAOptSetName.SUPPLIER_LIST]

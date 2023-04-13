@@ -18,13 +18,13 @@ def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir + "data/input/synthetic_data/"
     output_dir = ori_dir+"data/output/LBBD/"
-    size_set = [ "C", "D"]
+    size_set = ["A", "B", "C", "D"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))
         path = input_dir+size_name+"/"
-        # file_name = 'A_33_da_type_2_online_solve_牛仔'
         for file_name in os.listdir(path):
+        # for file_name in ['C_1_uat_1_full_梭织', 'C_4_uat_1_full_梭织']:
             ol = list()
             ol.append(file_name)
 

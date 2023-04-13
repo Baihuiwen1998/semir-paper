@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir+"data/input/synthetic_data/"
-    file_name = 'A/A_16_da_type_2_online_solve_梭织/'
+    file_name = 'C/C_1_uat_1_full_梭织/'
     solution_mode = 1   # {0: 整体模型, 1: LBBD模型}
     # 数据处理
     dp = DataPrepare(input_dir, file_name)

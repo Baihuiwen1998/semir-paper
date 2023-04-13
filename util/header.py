@@ -71,7 +71,7 @@ class ParamsMark:
     MIP_GAP = 0.001
     ALL_PARAMS_DICT = {MAX_ITERATION: 500,
                        MAX_RUNTIME: 10800,
-                       SHARE_LEVEL: 1,
+                       SHARE_LEVEL: 2,
                        CAPACITY_AVERAGE_OBJ: False,
                        CAPACITY_LADDEL_OBJ: True,
                        NU_VAR: False,

@@ -61,7 +61,7 @@ class ItemMatchFeature:
 class PerformanceMark:
     A = 'A'
     B = 'B'
-    C = 'C'
+    C = 'C_DONE_1'
     D = 'D'
     ALL_PERFORMANCE_MARK = [A, B, C, D]
 

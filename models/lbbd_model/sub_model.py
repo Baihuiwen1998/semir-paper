@@ -163,8 +163,8 @@ class SubModel:
         # logger.info('求解供应商{}子问题'.format(self.supplier))
         self.model.optimize()
         if self.model.Status in [gurobipy.GRB.Status.INFEASIBLE, gurobipy.GRB.Status.UNBOUNDED]:
-            error_info = '{} !!! 子问题没有可行解 !!!'.format(self.supplier)
-            logger.info(error_info)
+            # error_info = '{} !!! 子问题没有可行解 !!!'.format(self.supplier)
+            # logger.info(error_info)
             self.is_feasible = False
         else:
             if mode == 1:
