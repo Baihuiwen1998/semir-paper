@@ -277,6 +277,7 @@ class ItemHeader:
     QUARTER = 'quarter'
     SEX = 'sex'
     YEAR = 'year'
+    SHARE_LEVEL = 'share_level'
 
 
 class DevelopmentItemHeader:

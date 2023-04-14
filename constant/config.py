@@ -47,7 +47,7 @@ class DataName:
     CALENDAR = 'calendar_df'
 
 
-class DAOptSetName:
+class SetName:
     ORDER_LIST = 'order_list'  # 订单列表
     ORDER_BY_ITEM_DICT = 'order_by_item_dict'  # 给定款式item下的订单列表{item_1:[order_1,...,order_n], ...}
     ITEM_BY_CHANNEL_DICT = 'item_by_channel_dict'
@@ -93,7 +93,7 @@ class ParaName:
     # 款式相关参数
     ITEM_MAX_OCCUPY_DICT = 'item_max_occupy_dict'  # 给定款的单日最大可用产能(O_m) e.g. {item1: integer1, ...}
     ITEM_QUANTITY_DICT = 'item_quantity_dict'  # 款式对应线天数字典
-
+    ITEM_SHARE_LEVEL_DICT = 'item_share_level_dict' # 款式对应共有水平
     # 产线相关参数
     MACHINE_MONTH_MAX_PRODUCTION_DICT = 'supplier_month_max_production_dict'  # 给定算法供应商的每月产能上限(O_sT) e.g. {(supplier_1, time_str_1): integer1, ...}
     MACHINE_CAPACITY_PLANNED_DICT = 'machine_capacity_planned_dict'  # 给定产线的每月产能规划产能() e.g. {(machine_1, time_str_1): integer1, ...}

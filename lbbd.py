@@ -98,19 +98,17 @@ class LogicBasedBenders:
         sub_data[LBBDSubDataName.ITEM_LIST] = item_list
         sub_data[LBBDSubDataName.ORDER_LIST] = list()
         for item in item_list:
-            sub_data[LBBDSubDataName.ORDER_LIST].extend(self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item])
-        sub_data[LBBDSubDataName.MACHINE_LIST] = self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+            sub_data[LBBDSubDataName.ORDER_LIST].extend(self.data[SetName.ORDER_BY_ITEM_DICT][item])
+        sub_data[LBBDSubDataName.MACHINE_LIST] = self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
         return sub_data
 
 
     def update_data(self):
         self.sub_models = dict()
-
         self.result = dict()
         self.lbbd_cut_data[LBBDCutName.MIS_BY_SUPPLIER_DICT] = dict()
-
         self.lbbd_cut_data[LBBDCutName.INFEASIBLE_ITEM_SET_LIST_BY_SUPPLIER_DICT] = dict()
-        for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
             self.lbbd_cut_data[LBBDCutName.INFEASIBLE_ITEM_SET_LIST_BY_SUPPLIER_DICT][supplier] = list()
         self.lbbd_cut_data[LBBDCutName.MIS_BY_SUPPLIER_DICT] = dict()
 
@@ -159,11 +157,11 @@ class LogicBasedBenders:
                 if_feasible = sub_model.solve(mode=1)
                 if not if_feasible:
                     # 不可行
-                    # logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!")
-                    # print('[', end='')
-                    # for item in item_list:
-                    #     print(str(item), end=',')
-                    # print(']')
+                    logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!")
+                    print('[', end='')
+                    for item in item_list:
+                        print(str(item), end=',')
+                    print(']')
                     item_list = sub_data_copy[LBBDSubDataName.ITEM_LIST]
                     all_feasible = False
                     idx -= 1

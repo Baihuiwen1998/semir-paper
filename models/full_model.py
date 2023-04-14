@@ -44,9 +44,9 @@ class FullModel:
         self.vars[VarName.ALPHA] = {(item, supplier): self.model.addVar(vtype=gurobipy.GRB.BINARY,
                                                                         name=var_name_regularizer(f'V_{VarName.ALPHA}({item}_{supplier})'),
                                                                         column=None, obj=0.0, lb=0.0, ub=1.0)
-                                    for item in self.data[DAOptSetName.ITEM_LIST]
+                                    for item in self.data[SetName.ITEM_LIST]
                                     for supplier in
-                                    self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]}
+                                    self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]}
         # =============
         # 订单生产相关变量
         # =============
@@ -54,10 +54,10 @@ class FullModel:
         self.vars[VarName.Z] = {(order, machine, date): self.model.addVar(
             name=var_name_regularizer(f'V_{VarName.Z}({order}_{machine}_{date})'),
             vtype=gurobipy.GRB.INTEGER)
-            for item in self.data[DAOptSetName.ITEM_LIST]
-            for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
-            for machine in self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]
-            for date in self.data[DAOptSetName.ORDER_TIME_DICT][order]
+            for item in self.data[SetName.ITEM_LIST]
+            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
+            for machine in self.data[SetName.MACHINE_BY_ORDER_DICT][order]
+            for date in self.data[SetName.ORDER_TIME_DICT][order]
         }
 
         # =============
@@ -68,14 +68,14 @@ class FullModel:
         self.vars[VarName.SUPPLIER_CAPACITY_RATIO] = {supplier: self.model.addVar(
             name=var_name_regularizer(f'V_{VarName.SUPPLIER_CAPACITY_RATIO}_{supplier}'),
             vtype=gurobipy.GRB.CONTINUOUS, lb=0)
-            for supplier in self.data[DAOptSetName.SUPPLIER_LIST]
+            for supplier in self.data[SetName.SUPPLIER_LIST]
         }
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_AVERAGE_OBJ]:
             # 供应商产能规划达成率与池内平均规划率的差值
             self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA] = {supplier: self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.SUPPLIER_CAPACITY_RATIO_DELTA}_{supplier}'),
                 vtype=gurobipy.GRB.CONTINUOUS, lb=0)
-                for supplier in self.data[DAOptSetName.SUPPLIER_LIST]
+                for supplier in self.data[SetName.SUPPLIER_LIST]
             }
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_LADDEL_OBJ]:
@@ -83,17 +83,17 @@ class FullModel:
             self.vars[VarName.POOL_CAPACITY_RATIO_AVG] = {pool: self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.POOL_CAPACITY_RATIO_AVG}_{pool}'),
                 vtype=gurobipy.GRB.CONTINUOUS, lb=0)
-                for pool in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]
-                if len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]) > 0
+                for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]
+                if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]) > 0
             }
             # 供应商池子不符合阶梯性的达成率部分, pool_1（等级更高）相比pool_2平均达成率低的部分
             self.vars[VarName.POOLS_CAPACITY_RATIO_DELTA] = {(pool_1, pool_2): self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.POOLS_CAPACITY_RATIO_DELTA}_{pool_1}_{pool_2}'),
                 vtype=gurobipy.GRB.CONTINUOUS, lb=0)
-                for pool_1 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]
-                for pool_2 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]
-                if len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0
-                   and len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0
+                for pool_1 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
+                for pool_2 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
+                if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0
+                   and len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0
                    and ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[pool_1] < ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[pool_2]
             }
 
@@ -111,9 +111,9 @@ class FullModel:
              + self.data[ObjCoeffName.ORDER_DELAY_PUNISH] * self.data[ParaName.ORDER_QUANTITY_DICT][order]) *
             (1 - gurobipy.quicksum(
                 self.vars[VarName.ALPHA][self.data[ParaName.ORDER_ITEM_DICT][order], supplier]
-                for supplier in self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][
+                for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][
                     self.data[ParaName.ORDER_ITEM_DICT][order]]))
-            for order in self.data[DAOptSetName.ORDER_LIST]
+            for order in self.data[SetName.ORDER_LIST]
         )
         self.data[ObjName.ORDER_DELAY_OBJ] = order_delay_obj
 
@@ -126,7 +126,7 @@ class FullModel:
             capacity_average_obj = gurobipy.quicksum(
                 self.data[ObjCoeffName.CAPACITY_AVERAGE_PUNISH]
                 * self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier]
-                for supplier in self.data[DAOptSetName.SUPPLIER_LIST]
+                for supplier in self.data[SetName.SUPPLIER_LIST]
             )
             self.data[ObjName.CAPACITY_AVERAGE_OBJ] = capacity_average_obj
 
@@ -136,10 +136,10 @@ class FullModel:
             logger.info('模型添加优化目标：池子内产能规划达成率均值呈现阶梯')
             capacity_ladder_obj = self.data[ObjCoeffName.SUPPLIER_LADDER_PUNISH] * gurobipy.quicksum(
                 self.vars[VarName.POOLS_CAPACITY_RATIO_DELTA][pool_1, pool_2]
-                for pool_1 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]
-                for pool_2 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]
-                if len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0 and \
-                len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0 and \
+                for pool_1 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
+                for pool_2 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
+                if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0 and \
+                len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0 and \
                 ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[pool_1] < ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[pool_2])
             self.data[ObjName.CAPACITY_LADDER_OBJ] = capacity_ladder_obj
             obj += capacity_ladder_obj
@@ -156,11 +156,11 @@ class FullModel:
         # 款生产约束
         # =============
         logger.info('模型添加约束：单款只能在一个实体供应商进行生产')
-        for item in self.data[DAOptSetName.ITEM_LIST]:
+        for item in self.data[SetName.ITEM_LIST]:
             self.model.addConstr(
                 gurobipy.quicksum(
                     self.vars[VarName.ALPHA][item, supplier] for supplier in
-                    self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]
+                    self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]
                 ) <= 1,
                 name=f"item_{item}_uses_at_most_1_phy-supplier"
             )
@@ -169,24 +169,24 @@ class FullModel:
             # 产能规划达成率约束
             # =============
             logger.info('模型添加约束：产能规划达成率约束')
-            for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
+            for supplier in self.data[SetName.SUPPLIER_LIST]:
                 self.model.addConstr(
                     self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier] ==
                     gurobipy.quicksum(
                         self.vars[VarName.ALPHA][item, supplier] *
                         self.data[ParaName.ITEM_QUANTITY_DICT][
                             item]
-                        for item in self.data[DAOptSetName.ITEM_LIST]
+                        for item in self.data[SetName.ITEM_LIST]
                         if (item, supplier) in self.vars[VarName.ALPHA]
                     ) / sum([
                         self.data[ParaName.MACHINE_CAPACITY_PLANNED_DICT].get((machine, month), 0)
-                        for machine in self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
-                        for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, [])]),
+                        for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
+                        for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, [])]),
                     name=f"planned_capacity_occupied_ratio_of_{supplier}"
                 )
 
-            for pool in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]:
-                for supplier in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]:
+            for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
+                for supplier in self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]:
                     self.model.addConstr(
                         self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier] >=
                         self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier] - self.vars[VarName.POOL_CAPACITY_RATIO_AVG][pool],
@@ -200,29 +200,29 @@ class FullModel:
                     )
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_LADDEL_OBJ]:
-            for pool in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]:
-                if len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]) > 0:
+            for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
+                if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]) > 0:
                     self.model.addConstr(
                         gurobipy.quicksum(
                             self.vars[VarName.ALPHA][item, supplier] *
                             self.data[ParaName.ITEM_QUANTITY_DICT][
                                 item]
-                            for supplier in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]
-                            for item in self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][supplier]
+                            for supplier in self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]
+                            for item in self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
                             if (item, supplier) in self.vars[VarName.ALPHA]
                         ) / sum([
                             self.data[ParaName.MACHINE_CAPACITY_PLANNED_DICT].get((machine, month), 0)
-                            for supplier in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]
-                            for machine in self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
-                            for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, [])]) ==
+                            for supplier in self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]
+                            for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
+                            for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, [])]) ==
                         self.vars[VarName.POOL_CAPACITY_RATIO_AVG][pool],
                         name=f"pool_capacity_ratio_avg_of_{pool}"
                     )
 
-            for pool_1 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]:
-                for pool_2 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]:
-                    if len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0 and\
-                    len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0 and\
+            for pool_1 in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
+                for pool_2 in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
+                    if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0 and\
+                    len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0 and\
                     ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[pool_1] < ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[pool_2]:
                         self.model.addConstr(
                             self.vars[VarName.POOLS_CAPACITY_RATIO_DELTA][pool_1, pool_2] >=
@@ -235,14 +235,14 @@ class FullModel:
         # 需求生产约束
         # =============
         logger.info('模型添加约束：需求量生产')
-        for item in self.data[DAOptSetName.ITEM_LIST]:
-            for supplier in self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]:
-                for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
+        for item in self.data[SetName.ITEM_LIST]:
+            for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]:
+                for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
                     self.model.addConstr(gurobipy.quicksum(
                         self.vars[VarName.Z][order, machine, date]
-                        for machine in set.intersection(set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]),
-                                                        set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])))
-                        for date in self.data[DAOptSetName.ORDER_TIME_DICT][order]
+                        for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
+                                                        set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])))
+                        for date in self.data[SetName.ORDER_TIME_DICT][order]
                     ) == self.data[ParaName.ORDER_QUANTITY_DICT][order] *
                                          self.vars[VarName.ALPHA][item, supplier],
                                          name=f"order_{order}_production_quantity"
@@ -263,12 +263,12 @@ class FullModel:
         # 款式日生产上限
         # =============
         logger.info('模型添加约束：对款的单日生产上限限制')
-        for item in self.data[DAOptSetName.ITEM_LIST]:
-            for date in self.data[DAOptSetName.ITEM_TIME_DICT][item]:
+        for item in self.data[SetName.ITEM_LIST]:
+            for date in self.data[SetName.ITEM_TIME_DICT][item]:
                 self.model.addConstr(gurobipy.quicksum(
                     self.vars[VarName.Z].get((order, machine, date), 0) for order in
-                    self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
-                    for machine in self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]
+                    self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                    for machine in self.data[SetName.MACHINE_BY_ORDER_DICT][order]
                 ) <= self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item],
                                      name=f"production_limit_of_item_{item}_on_{date}"
                                      )
@@ -279,14 +279,14 @@ class FullModel:
         logger.info('模型添加约束：实体供应商产能日上限')
         for supplier in self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT]:
             for date in self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier]:
-                if self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier][date] >= 0 and date in self.data[DAOptSetName.TIME_LIST]:
+                if self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier][date] >= 0 and date in self.data[SetName.TIME_LIST]:
                     self.model.addConstr(
                         gurobipy.quicksum(
                             self.vars[VarName.Z][order, machine, date]
-                            for item in self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT].get(supplier, [])
-                            for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
-                            for machine in set.intersection(set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]),
-                                                            set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]))
+                            for item in self.data[SetName.ITEM_BY_SUPPLIER_DICT].get(supplier, [])
+                            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                            for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
+                                                            set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]))
                             if (order, machine, date) in self.vars[VarName.Z]
                         ) <= self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier][date],
                         name=f"production_limit_of_supplier_{supplier}'s_on_{date}"
@@ -296,13 +296,13 @@ class FullModel:
         # 产线产能月上限
         # =============
         logger.info('模型添加约束：产线产能月上限')
-        for machine in self.data[DAOptSetName.MACHINE_LIST]:
-            for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, []):
+        for machine in self.data[SetName.MACHINE_LIST]:
+            for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, []):
                 self.model.addConstr(gurobipy.quicksum(
                     self.vars[VarName.Z].get((order, machine, date), 0)
-                    for order in self.data[DAOptSetName.ORDER_BY_MACHINE_DICT][machine]
-                    for date in self.data[DAOptSetName.TIME_BY_MONTH_DICT][month]
-                    if month in self.data[DAOptSetName.TIME_BY_MONTH_DICT] and (order, machine, date) in
+                    for order in self.data[SetName.ORDER_BY_MACHINE_DICT][machine]
+                    for date in self.data[SetName.TIME_BY_MONTH_DICT][month]
+                    if month in self.data[SetName.TIME_BY_MONTH_DICT] and (order, machine, date) in
                     self.vars[VarName.Z]
                 ) <= self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0),
                                      name=f"demand_capacity_limit_for_machine_{machine}_in_{month}"

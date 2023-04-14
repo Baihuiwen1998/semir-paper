@@ -46,43 +46,43 @@ class ModelAnalysis:
         produced_order_set = set()
         for (item, supplier) in self.result[ResultName.ITEM_SUPPLIER]:
             produced_item_set.add(item)
-            for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
+            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
                 produced_order_set.add(order)
                 sum_order_production = sum(
                     self.result[ResultName.ORDER_MACHINE_DATE].get((order, machine, date), 0)
                     for machine in set.intersection(
-                        set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
-                        set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]))
-                    for date in self.data[DAOptSetName.ORDER_TIME_DICT][order])
+                        set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
+                        set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]))
+                    for date in self.data[SetName.ORDER_TIME_DICT][order])
                 if sum_order_production < self.data[ParaName.ORDER_QUANTITY_DICT][order] - 0.001 or sum_order_production > self.data[ParaName.ORDER_QUANTITY_DICT][order] + 0.001:
                     logger.info(
                         f"订单_{order}_的产量_{sum_order_production}不足需求量_{self.data[ParaName.ORDER_QUANTITY_DICT][order]}")
                     return False, None
         logger.info(
-            f"总款式_{len(self.data[DAOptSetName.ITEM_LIST])}_中完成款式产量_{len(produced_item_set)}")
+            f"总款式_{len(self.data[SetName.ITEM_LIST])}_中完成款式产量_{len(produced_item_set)}")
         logger.info(
-            f"总订单_{len(self.data[DAOptSetName.ORDER_LIST])}_中完成订单产量_{len(produced_order_set)}")
+            f"总订单_{len(self.data[SetName.ORDER_LIST])}_中完成订单产量_{len(produced_order_set)}")
         finished_rate_list.append(len(produced_item_set))
         finished_rate_list.append(len(produced_order_set))
         # 不生产款式的产量
-        for item in set(self.data[DAOptSetName.ITEM_LIST]) - produced_item_set:
-            for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
+        for item in set(self.data[SetName.ITEM_LIST]) - produced_item_set:
+            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
                 sum_order_production = sum(
                     self.result[ResultName.ORDER_MACHINE_DATE].get((order, machine, date), 0)
-                    for machine in self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]
-                    for date in self.data[DAOptSetName.ORDER_TIME_DICT][order])
+                    for machine in self.data[SetName.MACHINE_BY_ORDER_DICT][order]
+                    for date in self.data[SetName.ORDER_TIME_DICT][order])
                 if sum_order_production != 0:
                     logger.info(f"不开展生产的订单_{order}_的产量_{sum_order_production}超过0")
                     return False, None
 
         # 款式日产能上限
-        for item in self.data[DAOptSetName.ITEM_LIST]:
+        for item in self.data[SetName.ITEM_LIST]:
             if self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item] > 0:
-                for date in self.data[DAOptSetName.ITEM_TIME_DICT][item]:
+                for date in self.data[SetName.ITEM_TIME_DICT][item]:
                     sum_item_date_production = \
                         sum(self.result[ResultName.ORDER_MACHINE_DATE].get((order, machine, date), 0) for order in
-                            self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
-                            for machine in self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]
+                            self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                            for machine in self.data[SetName.MACHINE_BY_ORDER_DICT][order]
                             )
                     if sum_item_date_production > self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]:
                         logger.info(
@@ -95,30 +95,30 @@ class ModelAnalysis:
                 if self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier][date] >= 0:
                     sum_supplier_date_production = \
                         sum(self.result[ResultName.ORDER_MACHINE_DATE].get((order, machine, date), 0)
-                            for item in self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT].get(supplier, [])
-                            for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
-                            for machine in set.intersection(set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]),
-                                                            set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]))
+                            for item in self.data[SetName.ITEM_BY_SUPPLIER_DICT].get(supplier, [])
+                            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                            for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
+                                                            set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]))
                             )
                     if sum_supplier_date_production > self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][
                         supplier][date]:
                         logger.info(
                             f"{date}_供应商_{supplier}_的产量_{sum_supplier_date_production}_超过日上限_{self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier][date]}")
                         for (o, m, d) in self.result[ResultName.ORDER_MACHINE_DATE]:
-                            if date == d and (m in self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]):
+                            if date == d and (m in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]):
                                 logger.info(
                                     f"{date}_供应商_{supplier}_的机器_{m}_生产订单_{o}_产量_{self.result[ResultName.ORDER_MACHINE_DATE][o, m, d]}")
 
                         return False, None
 
         # 产线月产能上限
-        for machine in self.data[DAOptSetName.MACHINE_LIST]:
-            for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, []):
+        for machine in self.data[SetName.MACHINE_LIST]:
+            for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, []):
                 sum_machine_month_production = sum(
                     self.result[ResultName.ORDER_MACHINE_DATE].get((order, machine, date), 0)
-                    for order in self.data[DAOptSetName.ORDER_BY_MACHINE_DICT][machine]
-                    for date in self.data[DAOptSetName.TIME_BY_MONTH_DICT][month]
-                    if month in self.data[DAOptSetName.TIME_BY_MONTH_DICT]
+                    for order in self.data[SetName.ORDER_BY_MACHINE_DICT][machine]
+                    for date in self.data[SetName.TIME_BY_MONTH_DICT][month]
+                    if month in self.data[SetName.TIME_BY_MONTH_DICT]
                 )
                 if sum_machine_month_production > self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                         (machine, month), 0):

@@ -24,8 +24,8 @@ def cal_sub_data(data, supplier, item_list):
     sub_data[LBBDSubDataName.ITEM_LIST] = item_list
     sub_data[LBBDSubDataName.ORDER_LIST] = list()
     for item in item_list:
-        sub_data[LBBDSubDataName.ORDER_LIST].extend(data[DAOptSetName.ORDER_BY_ITEM_DICT][item])
-    sub_data[LBBDSubDataName.MACHINE_LIST] = data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+        sub_data[LBBDSubDataName.ORDER_LIST].extend(data[SetName.ORDER_BY_ITEM_DICT][item])
+    sub_data[LBBDSubDataName.MACHINE_LIST] = data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
     return sub_data
 
 
@@ -66,17 +66,17 @@ def main():
             item_max_occupy = data[ParaName.ITEM_MAX_OCCUPY_DICT][item]
         print("item_max_occupy="+str(item_max_occupy))
 
-        for order in data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
+        for order in data[SetName.ORDER_BY_ITEM_DICT][item]:
             print("--------------------order:" + str(order) +":" + str(data[ParaName.ORDER_QUANTITY_DICT][order]) + "---------------------------")
             print("production_date:", end='')
-            for date in data[DAOptSetName.ORDER_TIME_DICT][order]:
+            for date in data[SetName.ORDER_TIME_DICT][order]:
                 print(date, end=',')
             print()
-            time_set = time_set.union(set(data[DAOptSetName.ORDER_TIME_DICT][order]))
+            time_set = time_set.union(set(data[SetName.ORDER_TIME_DICT][order]))
 
-        for machine in set.intersection(set(data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]), set(data[DAOptSetName.MACHINE_BY_ITEM_DICT][item])):
+        for machine in set.intersection(set(data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]), set(data[SetName.MACHINE_BY_ITEM_DICT][item])):
             print("--------------------machine:" + str(machine) +"---------------------------")
-            for month in data[DAOptSetName.ITEM_MONTH_DICT][item]:
+            for month in data[SetName.ITEM_MONTH_DICT][item]:
                 print(month +":" + str(data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0)))
     print("--------------------supplier_daily_max_production---------------------------")
     for date in sorted(time_set):

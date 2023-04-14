@@ -40,8 +40,8 @@ def main():
             fp = FeaturePrepare(data, file_name)
             data = fp.prepare()
 
-            ol.append(len(data[DAOptSetName.SUPPLIER_LIST]))
-            ol.append(len(data[DAOptSetName.MACHINE_LIST]))
+            ol.append(len(data[SetName.SUPPLIER_LIST]))
+            ol.append(len(data[SetName.MACHINE_LIST]))
 
             # 建立LBBD模型并求解
             lbbd = LogicBasedBenders(data)

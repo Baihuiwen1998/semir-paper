@@ -37,28 +37,28 @@ class DataAnalysis:
     def cal_machine_supplier_features(self, new_list):
         item_supplier_num_list = list()
         item_machine_num_list = list()
-        for item in self.data[DAOptSetName.ITEM_LIST]:
-            item_machine_num_list.append((item, len(self.data[DAOptSetName.MACHINE_BY_ITEM_DICT][item])))
-            item_supplier_num_list.append((item, len(self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item])))
+        for item in self.data[SetName.ITEM_LIST]:
+            item_machine_num_list.append((item, len(self.data[SetName.MACHINE_BY_ITEM_DICT][item])))
+            item_supplier_num_list.append((item, len(self.data[SetName.SUPPLIER_BY_ITEM_DICT][item])))
 
         item_machine_num_df = pd.DataFrame(item_machine_num_list, columns=['item_id', 'machine_num'])
         item_supplier_num_df = pd.DataFrame(item_supplier_num_list, columns=['item_id', 'supplier_num'])
 
 
         supplier_item_num_list = list()
-        for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
-            supplier_item_num_list.append((supplier, len(self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][supplier])))
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
+            supplier_item_num_list.append((supplier, len(self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier])))
         supplier_item_num_df = pd.DataFrame(supplier_item_num_list, columns=['supplier_id', 'item_num'])
 
         supplier_machine_num_list = list()
-        for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
-            supplier_machine_num_list.append((supplier, len(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier])))
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
+            supplier_machine_num_list.append((supplier, len(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier])))
         supplier_machine_num_df = pd.DataFrame(supplier_machine_num_list, columns=['supplier_id', 'machine_num'])
 
-        new_list.append(len(self.data[DAOptSetName.ITEM_LIST]))
-        new_list.append(len(self.data[DAOptSetName.ORDER_LIST]))
-        new_list.append(len(self.data[DAOptSetName.SUPPLIER_LIST]))
-        new_list.append(len(self.data[DAOptSetName.MACHINE_LIST]))
+        new_list.append(len(self.data[SetName.ITEM_LIST]))
+        new_list.append(len(self.data[SetName.ORDER_LIST]))
+        new_list.append(len(self.data[SetName.SUPPLIER_LIST]))
+        new_list.append(len(self.data[SetName.MACHINE_LIST]))
         new_list.append(item_machine_num_df['machine_num'].mean())
         new_list.append(item_supplier_num_df['supplier_num'].mean())
         new_list.append(supplier_item_num_df['item_num'].mean())
@@ -79,12 +79,12 @@ class DataAnalysis:
         order_quantity_list = list()
         order_production_time_length_list = list()
 
-        for item in self.data[DAOptSetName.ITEM_LIST]:
-            item_order_num_list.append((item, len(self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item])))
+        for item in self.data[SetName.ITEM_LIST]:
+            item_order_num_list.append((item, len(self.data[SetName.ORDER_BY_ITEM_DICT][item])))
             item_quantity_list.append((item, self.data[ParaName.ITEM_QUANTITY_DICT][item]))
-        for order in self.data[DAOptSetName.ORDER_LIST]:
+        for order in self.data[SetName.ORDER_LIST]:
             order_quantity_list.append((order, self.data[ParaName.ORDER_QUANTITY_DICT][order]))
-            order_production_time_length_list.append((order, len(self.data[DAOptSetName.ORDER_TIME_DICT][order])))
+            order_production_time_length_list.append((order, len(self.data[SetName.ORDER_TIME_DICT][order])))
 
         item_order_num_df = pd.DataFrame(item_order_num_list, columns=['item_id', 'item_order_num'])
         item_quantity_df = pd.DataFrame(item_quantity_list, columns=['item_id', 'item_quantity'])
@@ -154,11 +154,11 @@ class DataAnalysis:
         order_quantity_list = list()
         order_production_time_length_list = list()
 
-        for item in self.data[DAOptSetName.ITEM_LIST]:
+        for item in self.data[SetName.ITEM_LIST]:
             item_quantity_list.append((item, self.data[ParaName.ITEM_QUANTITY_DICT][item]))
-        for order in self.data[DAOptSetName.ORDER_LIST]:
+        for order in self.data[SetName.ORDER_LIST]:
             order_quantity_list.append((order, self.data[ParaName.ORDER_QUANTITY_DICT][order]))
-            order_production_time_length_list.append((order, len(self.data[DAOptSetName.ORDER_TIME_DICT][order])))
+            order_production_time_length_list.append((order, len(self.data[SetName.ORDER_TIME_DICT][order])))
 
         item_quantity_df = pd.DataFrame(item_quantity_list, columns=['item_id', 'item_quantity'])
         order_quantity_df = pd.DataFrame(order_quantity_list, columns=['item_id', 'order_quantity'])

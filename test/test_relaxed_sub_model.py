@@ -46,17 +46,17 @@ class TestRelaxedSubModel:
             name=var_name_regularizer(f'V_{VarName.Z}({order}_{machine}_{date})'),
             vtype=gurobipy.GRB.INTEGER)
             for item in self.sub_data[LBBDSubDataName.ITEM_LIST]
-            for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
-            for machine in set.intersection(set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]),
+            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
+            for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
                                             set(self.sub_data[LBBDSubDataName.MACHINE_LIST]))
-            for date in self.data[DAOptSetName.ORDER_TIME_DICT][order]
+            for date in self.data[SetName.ORDER_TIME_DICT][order]
         }
 
         self.vars['item_date_max'] = {(item, date): self.model.addVar(
             name=var_name_regularizer(f'V_item_date_max({item}_{date})'),
             vtype=gurobipy.GRB.CONTINUOUS)
             for item in self.sub_data[LBBDSubDataName.ITEM_LIST]
-            for date in self.data[DAOptSetName.ITEM_TIME_DICT][item]
+            for date in self.data[SetName.ITEM_TIME_DICT][item]
         }
 
         self.vars['supplier_date_max'] = {(self.supplier, date): self.model.addVar(
@@ -69,19 +69,19 @@ class TestRelaxedSubModel:
             name=var_name_regularizer(f'V_machine_month_max({machine}_{month})'),
             vtype=gurobipy.GRB.CONTINUOUS)
             for machine in self.sub_data[LBBDSubDataName.MACHINE_LIST]
-            for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, [])
+            for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, [])
         }
 
     def add_objective(self):
         over_max_obj = gurobipy.quicksum(
             self.vars['item_date_max'][item, date] for item in self.sub_data[LBBDSubDataName.ITEM_LIST]
-            for date in self.data[DAOptSetName.ITEM_TIME_DICT][item]) + \
+            for date in self.data[SetName.ITEM_TIME_DICT][item]) + \
                        gurobipy.quicksum(self.vars['supplier_date_max'][self.supplier, date]
                                          for date in
                                          self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][self.supplier]) + \
                        gurobipy.quicksum(self.vars['machine_month_max'][machine, month] for machine in
                                          self.sub_data[LBBDSubDataName.MACHINE_LIST]
-                                         for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, []))
+                                         for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, []))
 
         self.model.setObjective(over_max_obj, gurobipy.GRB.MINIMIZE)
 
@@ -95,13 +95,13 @@ class TestRelaxedSubModel:
         # =============
         # logger.info('模型添加约束：需求量生产')
         for item in self.sub_data[LBBDSubDataName.ITEM_LIST]:
-            for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
+            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
                 self.model.addConstr(gurobipy.quicksum(
                     self.vars[VarName.Z][order, machine, date]
-                    for machine in set.intersection(set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]),
-                                                    set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT].get(
+                    for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
+                                                    set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT].get(
                                                         self.supplier, [])))
-                    for date in self.data[DAOptSetName.ORDER_TIME_DICT][order]
+                    for date in self.data[SetName.ORDER_TIME_DICT][order]
                 ) == self.data[ParaName.ORDER_QUANTITY_DICT][order],
                                      name=f"order_{order}_production_quantity"
                                      )
@@ -111,11 +111,11 @@ class TestRelaxedSubModel:
         # logger.info('模型添加约束：对款的单日生产上限限制')
         for item in self.sub_data[LBBDSubDataName.ITEM_LIST]:
             if self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item] > 0:
-                for date in self.data[DAOptSetName.ITEM_TIME_DICT][item]:
+                for date in self.data[SetName.ITEM_TIME_DICT][item]:
                     self.model.addConstr(gurobipy.quicksum(
                         self.vars[VarName.Z].get((order, machine, date), 0) for order in
-                        self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
-                        for machine in set.intersection(set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]),
+                        self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                        for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
                                                         set(self.sub_data[LBBDSubDataName.MACHINE_LIST]))
                     ) <= self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item] + self.vars['item_date_max'][item, date],
                                          name=f"production_limit_of_item_{item}_on_{date}"
@@ -127,13 +127,13 @@ class TestRelaxedSubModel:
         # logger.info('模型添加约束：实体供应商产能日上限')
         for date in self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][self.supplier]:
             if self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][self.supplier][date] >= 0 and date in \
-                    self.data[DAOptSetName.TIME_LIST]:
+                    self.data[SetName.TIME_LIST]:
                 self.model.addConstr(
                     gurobipy.quicksum(
                         self.vars[VarName.Z][order, machine, date]
                         for item in self.sub_data[LBBDSubDataName.ITEM_LIST]
-                        for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
-                        for machine in set.intersection(set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]),
+                        for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                        for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
                                                         set(self.sub_data[LBBDSubDataName.MACHINE_LIST]))
                         if (order, machine, date) in self.vars[VarName.Z]
                     ) <= self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][self.supplier][date] + \
@@ -146,13 +146,13 @@ class TestRelaxedSubModel:
         # =============
         # logger.info('模型添加约束：产线产能月上限')
         for machine in self.sub_data[LBBDSubDataName.MACHINE_LIST]:
-            for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, []):
+            for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, []):
                 self.model.addConstr(gurobipy.quicksum(
                     self.vars[VarName.Z].get((order, machine, date), 0)
                     for order in set.intersection(set(self.sub_data[LBBDSubDataName.ORDER_LIST]),
-                                                  set(self.data[DAOptSetName.ORDER_BY_MACHINE_DICT][machine]))
-                    for date in self.data[DAOptSetName.TIME_BY_MONTH_DICT][month]
-                    if month in self.data[DAOptSetName.TIME_BY_MONTH_DICT] and (order, machine, date) in
+                                                  set(self.data[SetName.ORDER_BY_MACHINE_DICT][machine]))
+                    for date in self.data[SetName.TIME_BY_MONTH_DICT][month]
+                    if month in self.data[SetName.TIME_BY_MONTH_DICT] and (order, machine, date) in
                     self.vars[VarName.Z]
                 ) <= self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0) +
                                      self.vars['machine_month_max'][machine, month],

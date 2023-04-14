@@ -1,3 +1,4 @@
+import numpy as np
 from util.raw_header import *
 from constant.config import *
 
@@ -15,6 +16,9 @@ class TransformData:
             self.desensitized_data[fabric] = dict()
             # 款式数据
             item_df = self.raw_data_by_fabric[fabric][RawDataName.ITEM]
+            # 添加款式数据的share_level（共有三层channel->age_group->item_capacity_category
+            # level = 1时表示以channel为界限分割， level = 2时表示以三项为界限，level=3表示只以channel->age_group为界限
+            item_df[ItemHeader.SHARE_LEVEL] = np.random.randint(1, 4, item_df.shape[0])
             self.desensitized_data[fabric][DataName.ITEM] = item_df
 
             # 订单数据

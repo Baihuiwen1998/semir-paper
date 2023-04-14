@@ -29,7 +29,7 @@ def main():
     input_dir = ori_dir+"data/input/raw_data/"
     output_desensitized_dir = ori_dir+"data/input/desensitized_data/"
     # output_synthetic_dir = ori_dir+"data/input/synthetic_data/"
-    file = 'uat_1_full/'
+    file = 'da_type_2_online_solve/'
 
     # 原数据读取
     lrd = LoadRawData(input_dir, file)

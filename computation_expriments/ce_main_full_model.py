@@ -39,8 +39,8 @@ def main():
             fp = FeaturePrepare(data, file_name)
             data = fp.prepare()
 
-            ol.append(len(data[DAOptSetName.SUPPLIER_LIST]))
-            ol.append(len(data[DAOptSetName.MACHINE_LIST]))
+            ol.append(len(data[SetName.SUPPLIER_LIST]))
+            ol.append(len(data[SetName.MACHINE_LIST]))
 
             result = None
             # 建立整体模型并求解

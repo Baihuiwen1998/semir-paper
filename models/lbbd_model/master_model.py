@@ -50,18 +50,18 @@ class MasterModel:
         self.vars[VarName.HAT_Z] = {(order, supplier, month): self.model.addVar(
             name=var_name_regularizer(f'V_{VarName.HAT_Z}({order}_{supplier}_{month})'),
             vtype=gurobipy.GRB.CONTINUOUS)
-            for item in self.data[DAOptSetName.ITEM_LIST]
-            for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
-            for supplier in self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]
-            for month in self.data[DAOptSetName.ITEM_MONTH_DICT][item]}
+            for item in self.data[SetName.ITEM_LIST]
+            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
+            for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]
+            for month in self.data[SetName.ITEM_MONTH_DICT][item]}
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
             logger.info('添加变量：松弛子问题辅助变量nu_m\hat_t')
             self.vars[VarName.NU] = {(machine, month): self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.NU}({machine}_{month})'),
                 vtype=gurobipy.GRB.BINARY)
-                for machine in self.data[DAOptSetName.MACHINE_LIST]
-                for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT][machine]
+                for machine in self.data[SetName.MACHINE_LIST]
+                for month in self.data[SetName.MACHINE_TIME_MONTH_DICT][machine]
             }
 
 
@@ -69,19 +69,19 @@ class MasterModel:
         self.vars[VarName.KAPPA] = {(supplier, date): self.model.addVar(
             name=var_name_regularizer(f'V_{VarName.KAPPA}({supplier}_{date})'),
             vtype=gurobipy.GRB.CONTINUOUS)
-            for supplier in self.data[DAOptSetName.SUPPLIER_LIST]
-            for date in self.data[DAOptSetName.TIME_LIST]}
+            for supplier in self.data[SetName.SUPPLIER_LIST]
+            for date in self.data[SetName.TIME_LIST]}
 
     def add_z_osT_constrains(self):
         # =============
         # Z_os\hat_t 需求生产总量
         # =============
-        for item in self.data[DAOptSetName.ITEM_LIST]:
-            for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
-                for supplier in self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]:
+        for item in self.data[SetName.ITEM_LIST]:
+            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
+                for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]:
                     self.model.addConstr(
                         gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                          for month in self.data[DAOptSetName.ORDER_TIME_MONTH_DICT][order]) ==
+                                          for month in self.data[SetName.ORDER_TIME_MONTH_DICT][order]) ==
                         self.data[ParaName.ORDER_QUANTITY_DICT][order] * self.vars[VarName.ALPHA][
                             item, supplier])
 
@@ -89,12 +89,12 @@ class MasterModel:
         # 月生产上限
         # =============
         # test-1 对于订单而言，月产量 <= min(款日上限，实体供应商日上限,产线月上限)
-        for item in self.data[DAOptSetName.ITEM_LIST]:
+        # for item in self.data[DAOptSetName.ITEM_LIST]:
             # item_max_occupy = self.data[DAOptParaName.ITEM_MAX_OCCUPY_DICT][item]
-            for supplier in self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]:
-                for month in self.data[DAOptSetName.ITEM_MONTH_DICT][item]:
-                    for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
-                        if (order, supplier, month) in self.vars[VarName.HAT_Z]:
+            # for supplier in self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]:
+            #     for month in self.data[DAOptSetName.ITEM_MONTH_DICT][item]:
+            #         for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
+            #             if (order, supplier, month) in self.vars[VarName.HAT_Z]:
                             # test-1.1
                             # self.model.addConstr(
                             #     self.vars[DAOptVarName.HAT_Z][order, supplier, month] <=
@@ -105,99 +105,99 @@ class MasterModel:
                             #         date[:7] == month)
                             # )
                             # test-1.2
-                            self.model.addConstr(self.vars[VarName.HAT_Z][order, supplier, month] <= sum(
-                                                 self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
-                                                     (machine, month), 0)
-                                                 for machine in set.intersection(
-                                                     set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
-                                                     set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]))
-                                             ))
+                            # self.model.addConstr(self.vars[VarName.HAT_Z][order, supplier, month] <= sum(
+                            #                      self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
+                            #                          (machine, month), 0)
+                            #                      for machine in set.intersection(
+                            #                          set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
+                            #                          set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]))
+                            #                  ))
 
         # test-2 对于款式而言，月产量 <= min(款日上限，实体供应商日上限, 产线月产能)
-        for item in self.data[DAOptSetName.ITEM_LIST]:
+        for item in self.data[SetName.ITEM_LIST]:
             item_max_occupy = self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]
-            for month in self.data[DAOptSetName.ITEM_MONTH_DICT][item]:
-                for supplier in self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]:
+            for month in self.data[SetName.ITEM_MONTH_DICT][item]:
+                for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]:
                     # test-2.1
                     self.model.addConstr(
                         gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                          for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
+                                          for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                           if (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
                         sum(min(item_max_occupy,
                                 self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier].get(date,
                                                                                                      self.data[ParaName.MAX_QUANTITY]))
-                            for date in self.data[DAOptSetName.ITEM_TIME_DICT][item] if
+                            for date in self.data[SetName.ITEM_TIME_DICT][item] if
                             date[:7] == month))
                     # test-2.2
                     self.model.addConstr(
                         gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                          for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
+                                          for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                           if (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
                         gurobipy.quicksum(
                             self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0)
                             for machine in set.intersection(
-                                set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
-                                set(self.data[DAOptSetName.MACHINE_BY_ITEM_DICT][item])))
+                                set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
+                                set(self.data[SetName.MACHINE_BY_ITEM_DICT][item])))
                     )
 
         # test-3 对于供应商而言，月产量 <= min(实体供应商日上限，sum(款式日上限)，产线月上限)
-        for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
-            for month in self.data[DAOptSetName.TIME_MONTH_LIST]:
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
+            for month in self.data[SetName.TIME_MONTH_LIST]:
                 # test-3.1
                 self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                        for item in
-                                                       self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][supplier]
-                                                       for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
+                                                       self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
+                                                       for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                        if (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
                                      gurobipy.quicksum(
                                          self.vars[VarName.KAPPA][supplier, date]
-                                         for date in self.data[DAOptSetName.TIME_BY_MONTH_DICT][month] if
+                                         for date in self.data[SetName.TIME_BY_MONTH_DICT][month] if
                                          date[:7] == month and (supplier, date) in self.vars[VarName.KAPPA])
                                      )
                 if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
                     # test-3.2
                     self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                            for item in
-                                                           self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][supplier]
-                                                           for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
+                                                           self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
+                                                           for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                            if
                                                            (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
                                          gurobipy.quicksum(
                                              self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                                                  (machine, month), 0)
                                              * self.vars[VarName.NU][machine, month]
-                                             for machine in self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+                                             for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
                                              if (machine, month) in self.vars[VarName.NU]
                                          ))
                 else:
                     # test-3.2
                     self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                            for item in
-                                                           self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][supplier]
-                                                           for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
+                                                           self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
+                                                           for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                            if
                                                            (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
                                          sum(self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                                                  (machine, month), 0)
-                                             for machine in self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+                                             for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
                                          ))
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 1:
             # test-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
-            for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
-                for channel in self.data[DAOptSetName.CHANNEL_LIST]:
-                    for month in self.data[DAOptSetName.TIME_MONTH_LIST]:
+            for supplier in self.data[SetName.SUPPLIER_LIST]:
+                for channel in self.data[SetName.CHANNEL_LIST]:
+                    for month in self.data[SetName.TIME_MONTH_LIST]:
                         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
                             self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                                    for item in
                                                                    set.intersection(set(
-                                                                       self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][
+                                                                       self.data[SetName.ITEM_BY_SUPPLIER_DICT][
                                                                            supplier]),
                                                                        set(self.data[
-                                                                               DAOptSetName.ITEM_BY_CHANNEL_DICT][
+                                                                               SetName.ITEM_BY_CHANNEL_DICT][
                                                                                channel]))
                                                                    for order in
-                                                                   self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
+                                                                   self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                                    if (order, supplier, month) in self.vars[
                                                                        VarName.HAT_Z]) <=
                                                  gurobipy.quicksum(
@@ -205,46 +205,46 @@ class MasterModel:
                                                          (machine, month), 0)
                                                      * self.vars[VarName.NU][machine, month]
                                                      for machine in set.intersection(
-                                                         set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
-                                                         set(self.data[DAOptSetName.MACHINE_BY_CHANNEL_DICT][channel]))
+                                                         set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
+                                                         set(self.data[SetName.MACHINE_BY_CHANNEL_DICT][channel]))
                                                      if (machine, month) in self.vars[VarName.NU]
                                                  ))
                         else:
                             self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                                    for item in
                                                                    set.intersection(set(
-                                                                       self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][
+                                                                       self.data[SetName.ITEM_BY_SUPPLIER_DICT][
                                                                            supplier]),
                                                                        set(self.data[
-                                                                               DAOptSetName.ITEM_BY_CHANNEL_DICT][
+                                                                               SetName.ITEM_BY_CHANNEL_DICT][
                                                                                channel]))
                                                                    for order in
-                                                                   self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
+                                                                   self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                                    if (order, supplier, month) in self.vars[
                                                                        VarName.HAT_Z]) <=
                                                  sum(
                                                      self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                                                          (machine, month), 0)
                                                      for machine in set.intersection(
-                                                         set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
-                                                         set(self.data[DAOptSetName.MACHINE_BY_CHANNEL_DICT][channel]))
+                                                         set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
+                                                         set(self.data[SetName.MACHINE_BY_CHANNEL_DICT][channel]))
                                                  ))
         elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 2:
             # test-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
-            for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
-                for label in self.data[DAOptSetName.LABEL_LIST]:
-                        for month in self.data[DAOptSetName.TIME_MONTH_LIST]:
+            for supplier in self.data[SetName.SUPPLIER_LIST]:
+                for label in self.data[SetName.LABEL_LIST]:
+                        for month in self.data[SetName.TIME_MONTH_LIST]:
                             if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
                                 self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                                        for item in
                                                                        set.intersection(set(
-                                                                           self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][
+                                                                           self.data[SetName.ITEM_BY_SUPPLIER_DICT][
                                                                                supplier]),
                                                                            set(self.data[
-                                                                                   DAOptSetName.ITEM_BY_LABEL_DICT][
+                                                                                   SetName.ITEM_BY_LABEL_DICT][
                                                                                    label[0], label[1], label[2]]))
                                                                        for order in
-                                                                       self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
+                                                                       self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                                        if (order, supplier, month) in self.vars[
                                                                            VarName.HAT_Z]) <=
                                                      gurobipy.quicksum(
@@ -252,46 +252,46 @@ class MasterModel:
                                                              (machine, month), 0)
                                                          * self.vars[VarName.NU][machine, month]
                                                          for machine in set.intersection(
-                                                             set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][
+                                                             set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][
                                                                      supplier]),
-                                                             set(self.data[DAOptSetName.MACHINE_BY_LABEL_DICT][label[0], label[1], label[2]]))
+                                                             set(self.data[SetName.MACHINE_BY_LABEL_DICT][label[0], label[1], label[2]]))
                                                          if (machine, month) in self.vars[VarName.NU]
                                                      ))
                             else:
                                 self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                                        for item in
                                                                        set.intersection(set(
-                                                                           self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][
+                                                                           self.data[SetName.ITEM_BY_SUPPLIER_DICT][
                                                                                supplier]),
                                                                            set(self.data[
-                                                                                   DAOptSetName.ITEM_BY_LABEL_DICT][
+                                                                                   SetName.ITEM_BY_LABEL_DICT][
                                                                                    label[0], label[1], label[2]]))
                                                                        for order in
-                                                                       self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]
+                                                                       self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                                        if (order, supplier, month) in self.vars[
                                                                            VarName.HAT_Z]) <=
                                                      sum(
                                                          self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                                                              (machine, month), 0)
                                                          for machine in set.intersection(
-                                                             set(self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][
+                                                             set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][
                                                                      supplier]),
-                                                             set(self.data[DAOptSetName.MACHINE_BY_LABEL_DICT][label[0], label[1], label[2]]))
+                                                             set(self.data[SetName.MACHINE_BY_LABEL_DICT][label[0], label[1], label[2]]))
                                                      ))
 
     def add_nu(self):
         # =============
         # nu_m\hat_t 定义用约束，注：由于z_os\hat t已经决策到了月维度，所以不需要该项
         # =============
-        for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
-            for machine in self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT][supplier]:
-                for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT][machine]:
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
+            for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]:
+                for month in self.data[SetName.MACHINE_TIME_MONTH_DICT][machine]:
                     # 内含有可在machine生产且生产日期包括month的order的款式列表
                     item_list = []
-                    for item in self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT].get(supplier, []):
-                        for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
-                            if month in self.data[DAOptSetName.ORDER_TIME_MONTH_DICT][order]:
-                                if machine in self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]:
+                    for item in self.data[SetName.ITEM_BY_SUPPLIER_DICT].get(supplier, []):
+                        for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
+                            if month in self.data[SetName.ORDER_TIME_MONTH_DICT][order]:
+                                if machine in self.data[SetName.MACHINE_BY_ORDER_DICT][order]:
                                     item_list.append(item)
                                     break
                     # test-5.1
@@ -318,16 +318,16 @@ class MasterModel:
         # =============
         # kappa_st 定义用约束
         # =============
-        for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
             item_max_occupy_dict = {}
-            for item in self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT].get(supplier, []):
+            for item in self.data[SetName.ITEM_BY_SUPPLIER_DICT].get(supplier, []):
                 item_max_occupy_dict[item] = self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]
 
-            for date in self.data[DAOptSetName.TIME_LIST]:
+            for date in self.data[SetName.TIME_LIST]:
                 # 内含有可在physical_supplier生产且生产日期包括date的款式列表
                 item_list = []
-                for item in self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT].get(supplier, []):
-                    if date in self.data[DAOptSetName.ITEM_TIME_DICT][item]:
+                for item in self.data[SetName.ITEM_BY_SUPPLIER_DICT].get(supplier, []):
+                    if date in self.data[SetName.ITEM_TIME_DICT][item]:
                         item_list.append(item)
 
                 # 内含有可在physical_supplier生产且生产日期包括date的款式列表
@@ -388,9 +388,9 @@ class MasterModel:
                                                                         name=var_name_regularizer(
                                                                                  f'V_{VarName.ALPHA}({item}_{supplier})'),
                                                                         column=None, obj=0.0, lb=0.0, ub=1.0)
-                                    for item in self.data[DAOptSetName.ITEM_LIST]
+                                    for item in self.data[SetName.ITEM_LIST]
                                     for supplier in
-                                    self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]}
+                                    self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]}
 
         # =============
         # 产能规划相关变量
@@ -400,14 +400,14 @@ class MasterModel:
         self.vars[VarName.SUPPLIER_CAPACITY_RATIO] = {supplier: self.model.addVar(
             name=var_name_regularizer(f'V_{VarName.SUPPLIER_CAPACITY_RATIO}_{supplier}'),
             vtype=gurobipy.GRB.CONTINUOUS, lb=0)
-            for supplier in self.data[DAOptSetName.SUPPLIER_LIST]
+            for supplier in self.data[SetName.SUPPLIER_LIST]
         }
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_AVERAGE_OBJ]:
             # 供应商产能规划达成率与池内平均规划率的差值
             self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA] = {supplier: self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.SUPPLIER_CAPACITY_RATIO_DELTA}_{supplier}'),
                 vtype=gurobipy.GRB.CONTINUOUS, lb=0)
-                for supplier in self.data[DAOptSetName.SUPPLIER_LIST]
+                for supplier in self.data[SetName.SUPPLIER_LIST]
             }
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_LADDEL_OBJ]:
@@ -415,17 +415,17 @@ class MasterModel:
             self.vars[VarName.POOL_CAPACITY_RATIO_AVG] = {pool: self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.POOL_CAPACITY_RATIO_AVG}_{pool}'),
                 vtype=gurobipy.GRB.CONTINUOUS, lb=0)
-                for pool in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]
-                if len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]) > 0
+                for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]
+                if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]) > 0
             }
             # 供应商池子不符合阶梯性的达成率部分, pool_1（等级更高）相比pool_2平均达成率低的部分
             self.vars[VarName.POOLS_CAPACITY_RATIO_DELTA] = {(pool_1, pool_2): self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.POOLS_CAPACITY_RATIO_DELTA}_{pool_1}_{pool_2}'),
                 vtype=gurobipy.GRB.CONTINUOUS, lb=0)
-                for pool_1 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]
-                for pool_2 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]
-                if len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0
-                   and len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0
+                for pool_1 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
+                for pool_2 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
+                if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0
+                   and len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0
                    and ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[pool_1] < ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[
                        pool_2]
             }
@@ -450,9 +450,9 @@ class MasterModel:
                  order]) *
             (1 - gurobipy.quicksum(
                 self.vars[VarName.ALPHA][self.data[ParaName.ORDER_ITEM_DICT][order], supplier]
-                for supplier in self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][
+                for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][
                     self.data[ParaName.ORDER_ITEM_DICT][order]]))
-            for order in self.data[DAOptSetName.ORDER_LIST]
+            for order in self.data[SetName.ORDER_LIST]
         )
         self.data[ObjName.ORDER_DELAY_OBJ] = order_delay_obj
 
@@ -465,7 +465,7 @@ class MasterModel:
             capacity_average_obj = gurobipy.quicksum(
                 self.data[ObjCoeffName.CAPACITY_AVERAGE_PUNISH]
                 * self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier]
-                for supplier in self.data[DAOptSetName.SUPPLIER_LIST]
+                for supplier in self.data[SetName.SUPPLIER_LIST]
             )
             self.data[ObjName.CAPACITY_AVERAGE_OBJ] = capacity_average_obj
 
@@ -475,10 +475,10 @@ class MasterModel:
             logger.info('模型添加优化目标：池子内产能规划达成率均值呈现阶梯')
             capacity_ladder_obj = self.data[ObjCoeffName.SUPPLIER_LADDER_PUNISH] * gurobipy.quicksum(
                 self.vars[VarName.POOLS_CAPACITY_RATIO_DELTA][pool_1, pool_2]
-                for pool_1 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]
-                for pool_2 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]
-                if len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0 and \
-                len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0 and \
+                for pool_1 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
+                for pool_2 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
+                if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0 and \
+                len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0 and \
                 ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[pool_1] < ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[pool_2])
             self.data[ObjName.CAPACITY_LADDER_OBJ] = capacity_ladder_obj
             obj += capacity_ladder_obj
@@ -494,11 +494,11 @@ class MasterModel:
         # 款生产约束
         # =============
         logger.info('模型添加约束：单款只能在一个实体供应商进行生产')
-        for item in self.data[DAOptSetName.ITEM_LIST]:
+        for item in self.data[SetName.ITEM_LIST]:
             self.model.addConstr(
                 gurobipy.quicksum(
                     self.vars[VarName.ALPHA][item, supplier] for supplier in
-                    self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]
+                    self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]
                 ) <= 1,
                 name=f"item_{item}_uses_at_most_1_phy-supplier"
             )
@@ -507,23 +507,23 @@ class MasterModel:
             # 产能规划达成率约束
             # =============
             logger.info('模型添加约束：产能规划达成率约束')
-            for supplier in self.data[DAOptSetName.SUPPLIER_LIST]:
+            for supplier in self.data[SetName.SUPPLIER_LIST]:
                 self.model.addConstr(
                     self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier] ==
                     gurobipy.quicksum(
                         self.vars[VarName.ALPHA][item, supplier] *
                         self.data[ParaName.ITEM_QUANTITY_DICT][
                             item]
-                        for item in self.data[DAOptSetName.ITEM_LIST]
+                        for item in self.data[SetName.ITEM_LIST]
                         if (item, supplier) in self.vars[VarName.ALPHA]
                     ) / sum([
                         self.data[ParaName.MACHINE_CAPACITY_PLANNED_DICT].get((machine, month), 0)
-                        for machine in self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
-                        for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, [])]),
+                        for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
+                        for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, [])]),
                     name=f"planned_capacity_occupied_ratio_of_{supplier}"
                 )
-            for pool in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]:
-                for supplier in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]:
+            for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
+                for supplier in self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]:
                     self.model.addConstr(
                         self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier] >=
                         self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier] -
@@ -538,29 +538,29 @@ class MasterModel:
                     )
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_LADDEL_OBJ]:
-            for pool in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]:
-                if len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]) > 0:
+            for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
+                if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]) > 0:
                     self.model.addConstr(
                         gurobipy.quicksum(
                             self.vars[VarName.ALPHA][item, supplier] *
                             self.data[ParaName.ITEM_QUANTITY_DICT][
                                 item]
-                            for supplier in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]
-                            for item in self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT][supplier]
+                            for supplier in self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]
+                            for item in self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
                             if (item, supplier) in self.vars[VarName.ALPHA]
                         ) / sum([
                             self.data[ParaName.MACHINE_CAPACITY_PLANNED_DICT].get((machine, month), 0)
-                            for supplier in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool]
-                            for machine in self.data[DAOptSetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
-                            for month in self.data[DAOptSetName.MACHINE_TIME_MONTH_DICT].get(machine, [])]) ==
+                            for supplier in self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]
+                            for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
+                            for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, [])]) ==
                         self.vars[VarName.POOL_CAPACITY_RATIO_AVG][pool],
                         name=f"pool_capacity_ratio_avg_of_{pool}"
                     )
 
-            for pool_1 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]:
-                for pool_2 in self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT]:
-                    if len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0 and \
-                            len(self.data[DAOptSetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0 and \
+            for pool_1 in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
+                for pool_2 in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
+                    if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0 and \
+                            len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_2]) > 0 and \
                             ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[pool_1] < ImportanceMark.ALL_IMPORTANCE_LEVEL_DICT[
                         pool_2]:
                         self.model.addConstr(
