@@ -18,7 +18,7 @@ def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir + "data/input/synthetic_data/"
     output_dir = ori_dir+"data/output/LBBD/"
-    size_set = ["A", "B", "C", "D"]
+    size_set = ["C"]# ["A", "B", "C", "D"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))
@@ -37,7 +37,7 @@ def main():
             ol.append(data[DataName.ORDER].shape[0])
 
             # 特征处理
-            fp = FeaturePrepare(data, file_name)
+            fp = FeaturePrepare(data, file_name, 1)
             data = fp.prepare()
 
             ol.append(len(data[SetName.SUPPLIER_LIST]))

@@ -84,6 +84,10 @@ class SetName:
     ITEM_BY_LABEL_DICT = 'item_by_label_dict'
 
 
+    MACHINE_SUB_SETS_BY_SUPPLIER_DICT = 'machine_sub_sets_by_supplier_dict'
+    ITEM_SUB_SETS_BY_SUPPLIER_DICT = 'item_sub_sets_by_supplier_dict'
+
+
 class ParaName:
     MAX_QUANTITY = 'max_quantity' # 大m
     # 需求相关参数
@@ -163,3 +167,4 @@ class LBBDSubDataName:
 class LBBDCutName:
     INFEASIBLE_ITEM_SET_LIST_BY_SUPPLIER_DICT = 'infeasible_item_set_list_by_supplier_dict'
     MIS_BY_SUPPLIER_DICT = 'mis_by_supplier_dict'
+    MIS_SIZE_BY_SUPPLIER_DICT = 'mis_size_by_supplier_dict'

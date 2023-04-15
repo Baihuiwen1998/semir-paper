@@ -18,14 +18,15 @@ def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir + "data/input/synthetic_data/"
     output_dir = ori_dir+"data/output/MIP/"
-    size_set = ["A", "B", "C_DONE_1", "D"]
+    # size_set = ["da_type_2_online_solve", "uat_1_full"]
+    size_set = ["A", "B", "C", "D"]
     for size_name in size_set:
         out_list = list()
-        out_list.append((1, 1, 1,  1, 1, 1, 1,1, 1, 1, 1,  1, 1,  1,  1, 1))
+        out_list.append((1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))
         path = input_dir+size_name+"/"
         for file_name in os.listdir(path):
             ol = list()
-            ol.append(file_name)
+            ol.append(size_name+file_name)
 
             # read data from file if needed
             # 数据处理
@@ -36,7 +37,7 @@ def main():
             ol.append(data[DataName.ORDER].shape[0])
 
             # 特征处理
-            fp = FeaturePrepare(data, file_name)
+            fp = FeaturePrepare(data, file_name, 0)
             data = fp.prepare()
 
             ol.append(len(data[SetName.SUPPLIER_LIST]))
@@ -71,10 +72,10 @@ def main():
 
             out_list.append(ol)
 
-        out_df = pd.DataFrame(out_list, columns=['name', 'item_num', 'order_num', 'supplier_num', 'machine_num', 'objVal',\
+            out_df = pd.DataFrame(out_list, columns=['name', 'item_num', 'order_num', 'supplier_num', 'machine_num', 'objVal',\
                                                  'Runtime', 'MIPGap', 'is_correct', 'finished_item_num', 'finished_order_num', 'pool_1', 'pool_2',\
                                                  'pool_3', 'pool_4', 'pool_5'])
-        out_df.to_csv(output_dir+size_name+".csv", encoding='utf-8-sig')
+            out_df.to_csv(output_dir+size_name+".csv", encoding='utf-8-sig')
 
 if __name__ == '__main__':
     main()

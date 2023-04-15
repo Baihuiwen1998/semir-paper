@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir+"data/input/desensitized_data/"
-    file_name = 'da_type_2_online_solve/毛织/'
-    solution_mode = 0   # {0: 整体模型, 1: LBBD模型}
+    file_name = 'uat_1_full/针织/'
+    solution_mode = 1   # {0: 整体模型, 1: LBBD模型}
     # 数据处理
     dp = DataPrepare(input_dir, file_name)
     data = dp.prepare()
 
     # 特征处理
-    fp = FeaturePrepare(data, file_name)
+    fp = FeaturePrepare(data, file_name, solution_mode)
     data = fp.prepare()
 
     result = None

@@ -1,5 +1,7 @@
 import logging
 
+import setuptools.package_index
+
 from constant.config import *
 from util.header import *
 from util.util import *
@@ -10,9 +12,10 @@ logging.basicConfig(level=logging.DEBUG, format=formatter)
 
 
 class FeaturePrepare:
-    def __init__(self, data, filename):
+    def __init__(self, data, filename, solution_mode):
         self.data = data
         self.filename = filename
+        self.solution_mode = solution_mode
 
     def prepare(self):
         """
@@ -25,6 +28,8 @@ class FeaturePrepare:
         self.gen_model_params()
         self.gen_match_sets_and_params()
         self.filter_data()
+        if self.solution_mode == 1 and ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 0:
+            self.gen_sub_item_machine_sets()
         self.gen_model_coefficients()
         self.print_model_info()
         logger.info('数据处理完成')
@@ -675,3 +680,44 @@ class FeaturePrepare:
         logger.info(f'款式数量_{len(self.data[SetName.ITEM_LIST])}_订单数量_{len(self.data[SetName.ORDER_LIST])}')
         logger.info(
             f'供应商数量_{len(self.data[SetName.SUPPLIER_LIST])}_产线数量_{len(self.data[SetName.MACHINE_LIST])}')
+
+    def gen_sub_item_machine_sets(self):
+        logger.info("生成款式-供应商-机器对应集合")
+
+        self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT] = dict()
+        self.data[SetName.ITEM_SUB_SETS_BY_SUPPLIER_DICT] = dict()
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
+            machine_index_dict = {v: k for k, v in enumerate(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier])}
+            item_sub_sets_list = list()
+            machine_sub_sets_list = list()
+            visited_machine_sets_binary = set()
+            for item_index_1 in range(len(self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier])-1):
+                for item_index_2 in range(item_index_1+1, len(self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier])):
+                    item_1 = self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier][item_index_1]
+                    item_2 = self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier][item_index_2]
+                    item_subset = {item_1, item_2}
+
+                    machine_subset = set.union(set(self.data[SetName.MACHINE_BY_ITEM_DICT][item_1]), (set(self.data[SetName.MACHINE_BY_ITEM_DICT][item_2])))
+                    machine_subset = set.intersection(machine_subset, set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]))
+                    machine_subset_binary = 0
+                    for machine in machine_subset:
+                        machine_subset_binary = machine_subset_binary | (1<<machine_index_dict[machine])
+                    if machine_subset_binary not in visited_machine_sets_binary:
+                        visited_machine_sets_binary.add(machine_subset_binary)
+                        if len(machine_subset) != len(self.data[SetName.MACHINE_BY_ITEM_DICT][item_1]) + len(self.data[SetName.MACHINE_BY_ITEM_DICT][item_2]):
+                            for item_index_3 in range(len(self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier])):
+                                if item_index_3 == item_index_1 | item_index_3 == item_index_2:
+                                    continue
+                                item_3 = self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier][item_index_3]
+                                machine_set_by_item_3 = set.intersection(set(self.data[SetName.MACHINE_BY_ITEM_DICT][item_3]), set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]))
+                                if machine_set_by_item_3.issubset(machine_subset):
+                                    item_subset.add(item_3)
+
+                            machine_sub_sets_list.append(machine_subset)
+                            item_sub_sets_list.append(item_subset)
+
+            self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier] = machine_sub_sets_list
+            self.data[SetName.ITEM_SUB_SETS_BY_SUPPLIER_DICT][supplier] = item_sub_sets_list
+
+
+

@@ -2,6 +2,7 @@ import setuptools.command.install
 
 from models.lbbd_model.master_model import MasterModel
 from constant.config import *
+from models.lbbd_model.relaxed_sub_model import RelaxedSubModel
 from models.lbbd_model.sub_model import SubModel
 import numpy as np
 import copy
@@ -111,14 +112,15 @@ class LogicBasedBenders:
         for supplier in self.data[SetName.SUPPLIER_LIST]:
             self.lbbd_cut_data[LBBDCutName.INFEASIBLE_ITEM_SET_LIST_BY_SUPPLIER_DICT][supplier] = list()
         self.lbbd_cut_data[LBBDCutName.MIS_BY_SUPPLIER_DICT] = dict()
+        self.lbbd_cut_data[LBBDCutName.MIS_SIZE_BY_SUPPLIER_DICT] = dict()
 
     def add_lbbd_cut(self, sub_model):
         """
         更新logic-based cut的信息
         寻找MIS
         """
-
-        self.lbbd_cut_data[LBBDCutName.MIS_BY_SUPPLIER_DICT][sub_model.supplier] = self.gen_mis(sub_model)
+        self.lbbd_cut_data[LBBDCutName.MIS_BY_SUPPLIER_DICT][sub_model.supplier], self.lbbd_cut_data[LBBDCutName.MIS_SIZE_BY_SUPPLIER_DICT][sub_model.supplier] = \
+            self.gen_mis(sub_model)
 
 
     def sort_items_by_quantity(self, item_list):
@@ -136,7 +138,7 @@ class LogicBasedBenders:
     def gen_mis(self, sub_model):
         """
         寻找最小不可行款式集合
-        1. 根据款式内需求的大小，做从小到大的排序
+
         """
 
         sub_data = sub_model.sub_data
@@ -169,5 +171,37 @@ class LogicBasedBenders:
             if all_feasible or (len(item_list) == 1):
                 # 去掉所有款式都可行，则说明找到了令supplier 产生不可解的最小款组合方案
                 flag = False
-        return item_list
+
+        return self.cut_lifting(sub_model, item_list)
+
+    def cut_lifting(self, sub_model, item_list):
+        mis_size = len(item_list)
+        lifted_item_list = copy.deepcopy(item_list)
+        sub_data = sub_model.sub_data
+        supplier = sub_model.supplier
+        for item in self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]:
+            if item not in item_list:
+                item_list_copy = copy.deepcopy(item_list)
+                item_list_copy.append(item)
+                sub_data_copy = copy.deepcopy(sub_data)
+                sub_data_copy[LBBDSubDataName.ITEM_LIST] = item_list_copy
+                sub_model = RelaxedSubModel(self.data, sub_data_copy)
+                sub_model.construct()
+                if_feasible = sub_model.solve(mode=1)
+                if not if_feasible:
+                    logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!")
+                    print('[', end='')
+                    for item in item_list_copy:
+                        print(str(item), end=',')
+                    print(']')
+
+                    lifted_item_list.append(item)
+        return lifted_item_list, mis_size
+
+
+
+
+
+
+
 

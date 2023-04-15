@@ -7,7 +7,7 @@ from util.util import var_name_regularizer
 logger = logging.getLogger(__name__)
 
 
-class SubModel:
+class RelaxedSubModel:
     """
     建立子问题模型
     """
@@ -41,6 +41,13 @@ class SubModel:
         # =============
         # 订单生产相关变量
         # =============
+        # logger.info('添加变量：订单生产变量alpha')
+        self.vars[VarName.ALPHA] = {item: self.model.addVar(vtype=gurobipy.GRB.BINARY,
+                                                            name=var_name_regularizer(
+                                                                f'V_{VarName.ALPHA}({item})'),
+                                                            column=None, obj=0.0, lb=0.0, ub=1.0)
+                                    for item in self.sub_data[LBBDSubDataName.ITEM_LIST]}
+
         # logger.info('添加变量：订单生产变量z')
         self.vars[VarName.Z] = {(order, machine, date): self.model.addVar(
             name=var_name_regularizer(f'V_{VarName.Z}({order}_{machine}_{date})'),
@@ -61,6 +68,13 @@ class SubModel:
         :return:
         """
         # =============
+        # 款式生产
+        # =============
+        self.model.addConstr(
+            gurobipy.quicksum(self.vars[VarName.ALPHA][item] for item in self.sub_data[LBBDSubDataName.ITEM_LIST]) == \
+            len(self.sub_data[LBBDSubDataName.ITEM_LIST]) - 1)
+
+        # =============
         # 需求生产约束
         # =============
         # logger.info('模型添加约束：需求量生产')
@@ -72,7 +86,7 @@ class SubModel:
                                                     set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT].get(
                                                         self.supplier, [])))
                     for date in self.data[SetName.ORDER_TIME_DICT][order]
-                ) == self.data[ParaName.ORDER_QUANTITY_DICT][order],
+                ) == self.data[ParaName.ORDER_QUANTITY_DICT][order] * self.vars[VarName.ALPHA][item],
                                      name=f"order_{order}_production_quantity"
                                      )
         # =============
@@ -124,7 +138,6 @@ class SubModel:
                     self.vars[VarName.Z]
                 ) <= self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0),
                                      name=f"demand_capacity_limit_for_machine_{machine}_in_{month}")
-
 
     def solve(self, mode):
         """
@@ -194,4 +207,3 @@ class SubModel:
                 }
 
                 return self.result
-
