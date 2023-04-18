@@ -12,7 +12,7 @@ class RelaxedSubModel:
     建立子问题模型
     """
 
-    def __init__(self, data, sub_data):
+    def __init__(self, data, sub_data, mis_size, relax_mode):
         self.supplier = sub_data[LBBDSubDataName.SUPPLIER]
         self.data = data
         self.model = gurobipy.Model()
@@ -20,6 +20,8 @@ class RelaxedSubModel:
         self.sub_data = sub_data  # 子问题迭代过程所需数据
         self.is_feasible = None
         self.result = None
+        self.mis_size = mis_size
+        self.relax_mode = relax_mode  # 1-lifting  2-调整alpha变量 # 3-允许有款式不生产
 
     def construct(self):
         """
@@ -60,7 +62,13 @@ class RelaxedSubModel:
         }
 
     def add_objective(self):
-        self.model.setObjective(0, gurobipy.GRB.MINIMIZE)
+
+        if self.relax_mode == 3:
+            item_product_opt_obj = -100 * gurobipy.quicksum(self.vars[VarName.ALPHA][item] for item in
+                                                            self.sub_data[LBBDSubDataName.ITEM_LIST])
+            self.model.setObjective(item_product_opt_obj, gurobipy.GRB.MINIMIZE)
+        else:
+            self.model.setObjective(0, gurobipy.GRB.MINIMIZE)
 
     def add_constrains(self):
         """
@@ -70,9 +78,10 @@ class RelaxedSubModel:
         # =============
         # 款式生产
         # =============
-        self.model.addConstr(
-            gurobipy.quicksum(self.vars[VarName.ALPHA][item] for item in self.sub_data[LBBDSubDataName.ITEM_LIST]) == \
-            len(self.sub_data[LBBDSubDataName.ITEM_LIST]) - 1)
+        if self.relax_mode == 1:
+            self.model.addConstr(
+                gurobipy.quicksum(self.vars[VarName.ALPHA][item] for item in
+                                  self.sub_data[LBBDSubDataName.ITEM_LIST]) == self.mis_size)
 
         # =============
         # 需求生产约束
@@ -139,6 +148,9 @@ class RelaxedSubModel:
                 ) <= self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0),
                                      name=f"demand_capacity_limit_for_machine_{machine}_in_{month}")
 
+    def add_alpha_equals_1_constrains(self, item):
+        self.model.addConstr(self.vars[VarName.ALPHA][item] == 1, name=f"item_{item}_production")
+
     def solve(self, mode):
         """
         求解子问题
@@ -199,8 +211,10 @@ class RelaxedSubModel:
                     if value > 0.001:
                         order_machine_date_result[order, machine, date] = value
                 item_supplier = dict()
-                for item in self.sub_data[LBBDSubDataName.ITEM_LIST]:
-                    item_supplier[item, self.supplier] = 1
+                for item, var in self.vars[VarName.ALPHA].items():
+                    value = var.x
+                    if value > 0.001:
+                        item_supplier[item, self.supplier] = 1
                 self.result = {
                     ResultName.ORDER_MACHINE_DATE: order_machine_date_result,
                     ResultName.ITEM_SUPPLIER: item_supplier

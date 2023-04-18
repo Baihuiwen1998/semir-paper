@@ -88,14 +88,14 @@ class MasterModel:
         # =============
         # 月生产上限
         # =============
-        # test-1 对于订单而言，月产量 <= min(款日上限，实体供应商日上限,产线月上限)
+        # supplimentary_lift-1 对于订单而言，月产量 <= min(款日上限，实体供应商日上限,产线月上限)
         # for item in self.data[DAOptSetName.ITEM_LIST]:
             # item_max_occupy = self.data[DAOptParaName.ITEM_MAX_OCCUPY_DICT][item]
             # for supplier in self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]:
             #     for month in self.data[DAOptSetName.ITEM_MONTH_DICT][item]:
             #         for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
             #             if (order, supplier, month) in self.vars[VarName.HAT_Z]:
-                            # test-1.1
+                            # supplimentary_lift-1.1
                             # self.model.addConstr(
                             #     self.vars[DAOptVarName.HAT_Z][order, supplier, month] <=
                             #     sum(min(item_max_occupy,
@@ -104,7 +104,7 @@ class MasterModel:
                             #         for date in self.data[DAOptSetName.ORDER_TIME_DICT][order] if
                             #         date[:7] == month)
                             # )
-                            # test-1.2
+                            # supplimentary_lift-1.2
                             # self.model.addConstr(self.vars[VarName.HAT_Z][order, supplier, month] <= sum(
                             #                      self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                             #                          (machine, month), 0)
@@ -113,12 +113,12 @@ class MasterModel:
                             #                          set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]))
                             #                  ))
 
-        # test-2 对于款式而言，月产量 <= min(款日上限，实体供应商日上限, 产线月产能)
+        # supplimentary_lift-2 对于款式而言，月产量 <= min(款日上限，实体供应商日上限, 产线月产能)
         for item in self.data[SetName.ITEM_LIST]:
             item_max_occupy = self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]
             for month in self.data[SetName.ITEM_MONTH_DICT][item]:
                 for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]:
-                    # test-2.1
+                    # supplimentary_lift-2.1
                     self.model.addConstr(
                         gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                           for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
@@ -128,7 +128,7 @@ class MasterModel:
                                                                                                      self.data[ParaName.MAX_QUANTITY]))
                             for date in self.data[SetName.ITEM_TIME_DICT][item] if
                             date[:7] == month))
-                    # test-2.2
+                    # supplimentary_lift-2.2
                     self.model.addConstr(
                         gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                           for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
@@ -140,10 +140,10 @@ class MasterModel:
                                 set(self.data[SetName.MACHINE_BY_ITEM_DICT][item])))
                     )
 
-        # test-3 对于供应商而言，月产量 <= min(实体供应商日上限，sum(款式日上限)，产线月上限)
+        # supplimentary_lift-3 对于供应商而言，月产量 <= min(实体供应商日上限，sum(款式日上限)，产线月上限)
         for supplier in self.data[SetName.SUPPLIER_LIST]:
             for month in self.data[SetName.TIME_MONTH_LIST]:
-                # test-3.1
+                # supplimentary_lift-3.1
                 self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                        for item in
                                                        self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
@@ -155,7 +155,7 @@ class MasterModel:
                                          date[:7] == month and (supplier, date) in self.vars[VarName.KAPPA])
                                      )
                 if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
-                    # test-3.2
+                    # supplimentary_lift-3.2
                     self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                            for item in
                                                            self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
@@ -170,7 +170,7 @@ class MasterModel:
                                              if (machine, month) in self.vars[VarName.NU]
                                          ))
                 else:
-                    # test-3.2
+                    # supplimentary_lift-3.2
                     self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                            for item in
                                                            self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
@@ -182,7 +182,7 @@ class MasterModel:
                                              for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
                                          ))
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 0:
-            # test-4 对于具有交叉可用machine的情况而言，集合a内部的产量<= 集合a对应machine月产能
+            # supplimentary_lift-4 对于具有交叉可用machine的情况而言，集合a内部的产量<= 集合a对应machine月产能
             for supplier in self.data[SetName.SUPPLIER_LIST]:
                 for month in self.data[SetName.TIME_MONTH_LIST]:
                     for idx in range(len(self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier])):
@@ -215,7 +215,7 @@ class MasterModel:
                                                      for machine in machine_subset
                                                  ))
         elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 1:
-            # test-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
+            # supplimentary_lift-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
             for supplier in self.data[SetName.SUPPLIER_LIST]:
                 for channel in self.data[SetName.CHANNEL_LIST]:
                     for month in self.data[SetName.TIME_MONTH_LIST]:
@@ -262,7 +262,7 @@ class MasterModel:
                                                          set(self.data[SetName.MACHINE_BY_CHANNEL_DICT][channel]))
                                                  ))
         elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 2:
-            # test-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
+            # supplimentary_lift-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
             for supplier in self.data[SetName.SUPPLIER_LIST]:
                 for label in self.data[SetName.LABEL_LIST]:
                         for month in self.data[SetName.TIME_MONTH_LIST]:
@@ -326,11 +326,11 @@ class MasterModel:
                                 if machine in self.data[SetName.MACHINE_BY_ORDER_DICT][order]:
                                     item_list.append(item)
                                     break
-                    # test-5.1
+                    # supplimentary_lift-5.1
                     self.model.addConstr(
                         self.vars[VarName.NU][machine, month] <=
                         gurobipy.quicksum(self.vars[VarName.ALPHA][item, supplier] for item in item_list))
-                    # 有效不等式，不会去掉最优解 # test-5.2
+                    # 有效不等式，不会去掉最优解 # supplimentary_lift-5.2
                     for item in item_list:
                         self.model.addConstr(
                             self.vars[VarName.NU][machine, month] >=

@@ -112,7 +112,7 @@ class AgeGroupMark:
 class FabricCategoryMark:
     TATTING = '梭织'
     WOOL = '毛织'
-    KINIT = '针织'
+    KINIT = 'at_针织'
     DENIM = '牛仔'
     ALL_FABRIC_CATEGORY_MARK = [TATTING, WOOL, KINIT, DENIM]
 

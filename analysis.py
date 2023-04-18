@@ -5,6 +5,7 @@
 import copy
 import logging
 from constant.config import *
+from util.header import ParamsMark
 
 logger = logging.getLogger(__name__)
 
@@ -43,17 +44,31 @@ class ModelAnalysis:
         # 生产款式内需求的产量
         produced_item_set = set()
         produced_order_set = set()
-        for (item, supplier) in self.result[ResultName.ITEM_SUPPLIER]:
-            produced_item_set.add(item)
-            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.MILP_MODEL] == 0:
+            for (item, supplier) in self.result[ResultName.ITEM_SUPPLIER]:
+                produced_item_set.add(item)
+                for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
+                    produced_order_set.add(order)
+                    sum_order_production = sum(
+                        self.result[ResultName.ORDER_MACHINE_DATE].get((order, machine, date), 0)
+                        for machine in set.intersection(
+                            set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
+                            set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]))
+                        for date in self.data[SetName.ORDER_TIME_DICT][order])
+                    if sum_order_production < self.data[ParaName.ORDER_QUANTITY_DICT][order] - 0.001 or sum_order_production > self.data[ParaName.ORDER_QUANTITY_DICT][order] + 0.001:
+                        logger.info(
+                            f"订单_{order}_的产量_{sum_order_production}不足需求量_{self.data[ParaName.ORDER_QUANTITY_DICT][order]}")
+                        return False
+        else:
+            for order in self.result[ResultName.ORDER_PRODUCTION]:
                 produced_order_set.add(order)
+                produced_item_set.add(self.data[ParaName.ORDER_ITEM_DICT][order])
                 sum_order_production = sum(
                     self.result[ResultName.ORDER_MACHINE_DATE].get((order, machine, date), 0)
-                    for machine in set.intersection(
-                        set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
-                        set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]))
+                    for machine in self.data[SetName.MACHINE_BY_ORDER_DICT][order]
                     for date in self.data[SetName.ORDER_TIME_DICT][order])
-                if sum_order_production < self.data[ParaName.ORDER_QUANTITY_DICT][order] - 0.001 or sum_order_production > self.data[ParaName.ORDER_QUANTITY_DICT][order] + 0.001:
+                if sum_order_production < self.data[ParaName.ORDER_QUANTITY_DICT][
+                    order] - 0.001 or sum_order_production > self.data[ParaName.ORDER_QUANTITY_DICT][order] + 0.001:
                     logger.info(
                         f"订单_{order}_的产量_{sum_order_production}不足需求量_{self.data[ParaName.ORDER_QUANTITY_DICT][order]}")
                     return False

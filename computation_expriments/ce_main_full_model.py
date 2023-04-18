@@ -7,19 +7,18 @@ import pandas as pd
 from ce_analysis import ModelAnalysis
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare import FeaturePrepare
-from models.full_model import FullModel
+from models.full_model_alpha import FullModelAlpha
 from constant.config import *
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
 logger = logging.getLogger(__name__)
 
 def main():
-
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir + "data/input/synthetic_data/"
     output_dir = ori_dir+"data/output/MIP/"
     # size_set = ["da_type_2_online_solve", "uat_1_full"]
-    size_set = ["A", "B", "C", "D"]
+    size_set = ["C", "D"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))
@@ -45,7 +44,7 @@ def main():
 
             result = None
             # 建立整体模型并求解
-            full_model = FullModel(data)
+            full_model = FullModelAlpha(data)
             full_model.construct_model()
             result = full_model.gen_model_result()
             if result:

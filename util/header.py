@@ -70,15 +70,18 @@ class ParamsMark:
     CAPACITY_LADDEL_OBJ = 'capacity_ladder_obj'     # 是否启动供应商池成阶梯目标函数
     NU_VAR = 'nu_var'                               # 是否启用变量nu
     MIP_GAP = 'mip_gap'                                 # 求解停止准则
+    ITEM_MULTI_SUPPLIER = 'item_multi_supplier'       # 一个款式内的订单可以分给多个supplier生产
+    MILP_MODEL = 'milp_model'                           # 选择采用alpha还是beta为决策变量的MILP模型
     ALL_PARAMS_DICT = {MAX_ITERATION: 500,
                        MAX_RUNTIME: 7200,
                        SHARE_LEVEL: 0,
                        CAPACITY_AVERAGE_OBJ: True,
                        CAPACITY_LADDEL_OBJ: True,
                        NU_VAR: False,
-                       MIP_GAP: 0.005
+                       MIP_GAP: 0.005,
+                       ITEM_MULTI_SUPPLIER: False,
+                       MILP_MODEL: 0    # {0:alpha, 1:beta}
                        }
-
 
 
 

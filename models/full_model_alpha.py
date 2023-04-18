@@ -1,3 +1,4 @@
+import itertools
 import logging
 import gurobipy
 
@@ -8,7 +9,7 @@ from util.util import var_name_regularizer
 logger = logging.getLogger(__name__)
 
 
-class FullModel:
+class FullModelAlpha:
 
     def __init__(self, data):
 
@@ -47,6 +48,7 @@ class FullModel:
                                     for item in self.data[SetName.ITEM_LIST]
                                     for supplier in
                                     self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]}
+
         # =============
         # 订单生产相关变量
         # =============
@@ -164,6 +166,7 @@ class FullModel:
                 ) <= 1,
                 name=f"item_{item}_uses_at_most_1_phy-supplier"
             )
+
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_AVERAGE_OBJ]:
             # =============
             # 产能规划达成率约束
@@ -173,11 +176,11 @@ class FullModel:
                 self.model.addConstr(
                     self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier] ==
                     gurobipy.quicksum(
-                        self.vars[VarName.ALPHA][item, supplier] *
-                        self.data[ParaName.ITEM_QUANTITY_DICT][
-                            item]
-                        for item in self.data[SetName.ITEM_LIST]
-                        if (item, supplier) in self.vars[VarName.ALPHA]
+                        self.vars[VarName.Z][order, machine, date] for item in self.data[SetName.ITEM_LIST]
+                        for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                        for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
+                                                        set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]))
+                        for date in self.data[SetName.ORDER_TIME_DICT][order]
                     ) / sum([
                         self.data[ParaName.MACHINE_CAPACITY_PLANNED_DICT].get((machine, month), 0)
                         for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
@@ -204,12 +207,12 @@ class FullModel:
                 if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]) > 0:
                     self.model.addConstr(
                         gurobipy.quicksum(
-                            self.vars[VarName.ALPHA][item, supplier] *
-                            self.data[ParaName.ITEM_QUANTITY_DICT][
-                                item]
+                            self.vars[VarName.Z][order, machine, date] for item in self.data[SetName.ITEM_LIST]
+                            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
                             for supplier in self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]
-                            for item in self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
-                            if (item, supplier) in self.vars[VarName.ALPHA]
+                            for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
+                                                            set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]))
+                            for date in self.data[SetName.ORDER_TIME_DICT][order]
                         ) / sum([
                             self.data[ParaName.MACHINE_CAPACITY_PLANNED_DICT].get((machine, month), 0)
                             for supplier in self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]
@@ -334,12 +337,7 @@ class FullModel:
             return False
 
         # 获取求解结果
-        # 款分配至实体供应商结果
-        item_supplier_result = dict()
-        for (item, supplier), var in self.vars[VarName.ALPHA].items():
-            value = var.x
-            if value > 0.001:
-                item_supplier_result[item, supplier] = value
+
         order_machine_date_result = dict()
         for(order, machine, date), var in self.vars[VarName.Z].items():
             value = var.x
@@ -357,9 +355,18 @@ class FullModel:
             pool_capacity_ratio_avg_result[pool] = value
 
         self.result = {
-            ResultName.ITEM_SUPPLIER: item_supplier_result,
             ResultName.ORDER_MACHINE_DATE: order_machine_date_result,
             ResultName.SUPPLIER_CAPACITY_RATIO: supplier_capacity_ratio_result,
             ResultName.POOL_CAPACITY_RATIO_AVG: pool_capacity_ratio_avg_result
         }
+
+        # 款分配至实体供应商结果
+        item_supplier_result = dict()
+        for (item, supplier), var in self.vars[VarName.ALPHA].items():
+            value = var.x
+            if value > 0.001:
+                item_supplier_result[item, supplier] = value
+        self.result[ResultName.ITEM_SUPPLIER] = item_supplier_result
+
+
         return self.result

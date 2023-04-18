@@ -1,15 +1,9 @@
 import logging
 import os
 
-import setuptools.glob
-
-from analysis import ModelAnalysis
 from constant.config import *
-from lbbd import LogicBasedBenders
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare import FeaturePrepare
-from models.full_model import FullModel
-from models.lbbd_model.sub_model import SubModel
 from test_relaxed_sub_model import TestRelaxedSubModel
 from test_master_model import TestMasterModel
 
@@ -33,7 +27,7 @@ def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir+"data/input/desensitized_data/"
     output_dir = ori_dir+"data/output/"
-    file = 'uat_1_full/' + '针织/'
+    file = 'uat_1_full/' + 'at_针织/'
 
     input_file_dir = os.path.join(input_dir, file)
     output_file_dir = os.path.join(output_dir, file)

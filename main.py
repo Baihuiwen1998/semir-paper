@@ -1,11 +1,12 @@
 import logging
-import os
 
 from analysis import ModelAnalysis
-from lbbd import LogicBasedBenders
+from models.full_model_beta import FullModelBeta
+from models.lbbd_model.lbbd import LogicBasedBenders
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare import FeaturePrepare
-from models.full_model import FullModel
+from models.full_model_alpha import FullModelAlpha
+from util.header import ParamsMark
 
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
@@ -13,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
-    input_dir = ori_dir+"data/input/desensitized_data/"
-    file_name = 'uat_1_full/针织/'
-    solution_mode = 1   # {0: 整体模型, 1: LBBD模型}
+    input_dir = ori_dir+"data/input/synthetic_data/"
+    file_name = 'D/D_5_uat_1_full_梭织/'
+    solution_mode = 1  # {0: 整体模型, 1: LBBD模型}
     # 数据处理
     dp = DataPrepare(input_dir, file_name)
     data = dp.prepare()
@@ -27,7 +28,10 @@ def main():
     result = None
     if solution_mode == 0:
         # 建立整体模型并求解
-        full_model = FullModel(data)
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.MILP_MODEL] == 0:              # alpha
+            full_model = FullModelAlpha(data)
+        else:
+            full_model = FullModelBeta(data)
         full_model.construct_model()
         result = full_model.gen_model_result()
     elif solution_mode == 1:

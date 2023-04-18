@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 en_name_of_fabric = {
             '梭织': 'Woven',
             '毛织': 'Woolen',
-            '针织': 'Knit',
+            'at_针织': 'Knit',
             '牛仔': 'Denim'
         }
 

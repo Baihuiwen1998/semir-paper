@@ -1,14 +1,12 @@
 import logging
 import os
 
-import gurobipy
 import pandas as pd
 
 from ce_analysis import ModelAnalysis
-from lbbd import LogicBasedBenders
+from models.lbbd_model.lbbd import LogicBasedBenders
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare import FeaturePrepare
-from models.full_model import FullModel
 from constant.config import *
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
@@ -18,7 +16,9 @@ def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir + "data/input/synthetic_data/"
     output_dir = ori_dir+"data/output/LBBD/"
-    size_set = ["C"]# ["A", "B", "C", "D"]
+    # size_set = [ "uat_1_full"] # "da_type_2_online_solve"
+    # size_set = ["A", "B", "C", "D"]
+    size_set = ["supplimentary_lift"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))
@@ -33,37 +33,34 @@ def main():
             dp = DataPrepare(path, file_name+"/")
             data = dp.prepare()
 
-            ol.append(data[DataName.ITEM].shape[0])
-            ol.append(data[DataName.ORDER].shape[0])
-
             # 特征处理
             fp = FeaturePrepare(data, file_name, 1)
             data = fp.prepare()
 
+            ol.append(len(data[SetName.ITEM_LIST]))
+            ol.append(len(data[SetName.ORDER_LIST]))
             ol.append(len(data[SetName.SUPPLIER_LIST]))
             ol.append(len(data[SetName.MACHINE_LIST]))
 
             # 建立LBBD模型并求解
             lbbd = LogicBasedBenders(data)
             is_opt, result = lbbd.solve()
-            if is_opt:
-                # 结果  检查 + 分析
-                ma = ModelAnalysis(data, result, 1)
-                is_correct, finished_rate_list = ma.analysis_result()
-                if is_correct:
-                    ol.append(result[LBBDResultName.OBJ_VALUE])
-                    ol.append(result[LBBDResultName.RUN_TIME])
-                    ol.append(result[LBBDResultName.LOWER_BOUND])
-                    ol.append(result[LBBDResultName.ITERATION])
-                    ol.append("检查正确")
-                    ol.extend(finished_rate_list)
-                else:
-                    ol.append(result[LBBDResultName.OBJ_VALUE])
-                    ol.append(result[LBBDResultName.RUN_TIME])
-                    ol.append(result[LBBDResultName.LOWER_BOUND])
-                    ol.append("检查错误")
+            # 结果  检查 + 分析
+            ma = ModelAnalysis(data, result, 1)
+            is_correct, finished_rate_list = ma.analysis_result()
+            if is_correct:
+                ol.append(result[LBBDResultName.OBJ_VALUE])
+                ol.append(result[LBBDResultName.RUN_TIME])
+                ol.append(result[LBBDResultName.LOWER_BOUND])
+                ol.append(result[LBBDResultName.ITERATION])
+                ol.append("检查正确")
+                ol.extend(finished_rate_list)
             else:
-                ol.append("meet stop criteria")
+                ol.append(result[LBBDResultName.OBJ_VALUE])
+                ol.append(result[LBBDResultName.RUN_TIME])
+                ol.append(result[LBBDResultName.LOWER_BOUND])
+                ol.append(result[LBBDResultName.ITERATION])
+                ol.append("检查错误")
 
             out_list.append(ol)
 
