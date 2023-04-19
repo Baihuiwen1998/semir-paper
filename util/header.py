@@ -63,7 +63,7 @@ class ImportanceMark:
                                  ON_WATCH: 4}
 
 class ParamsMark:
-    MAX_ITERATION = 'max_iteration'             # 最大迭代次数
+    MAX_ITERATION = 'max_iter'             # 最大迭代次数
     MAX_RUNTIME = 'max_runtime'                 # 最长的求解时间
     SHARE_LEVEL = 'share_level'                 # 产线的产能共用水平，0-存在可用产线集合的交集，1-按照channel区分，2-按照channel-age-group区分
     CAPACITY_AVERAGE_OBJ = 'capacity_average_obj'   # 是否启动供应商均衡目标函数
@@ -72,6 +72,9 @@ class ParamsMark:
     MIP_GAP = 'mip_gap'                                 # 求解停止准则
     ITEM_MULTI_SUPPLIER = 'item_multi_supplier'       # 一个款式内的订单可以分给多个supplier生产
     MILP_MODEL = 'milp_model'                           # 选择采用alpha还是beta为决策变量的MILP模型
+    SOLUTION_MODE = 'solution_mode'
+    CUT_MODE = 'cut_mode'
+    IS_LIFT = 'is_lift'
     ALL_PARAMS_DICT = {MAX_ITERATION: 500,
                        MAX_RUNTIME: 7200,
                        SHARE_LEVEL: 0,
@@ -80,7 +83,10 @@ class ParamsMark:
                        NU_VAR: False,
                        MIP_GAP: 0.005,
                        ITEM_MULTI_SUPPLIER: False,
-                       MILP_MODEL: 0    # {0:alpha, 1:beta}
+                       MILP_MODEL: 0,    # {0:alpha, 1:beta}
+                       SOLUTION_MODE: 1,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
+                       CUT_MODE: 0,      # {0: greedy, 1:dbfs}
+                       IS_LIFT: False
                        }
 
 

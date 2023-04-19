@@ -1,6 +1,9 @@
 import logging
-import gurobipy
+import gurobipy as gp
 from constant.config import *
+from models.lbbd_model.generate_cut import GenerateCut
+from models.lbbd_model.my_call_back import MyCallBack
+from models.lbbd_model.sub_model import SubModel
 from util.header import ImportanceMark, ParamsMark
 from util.util import var_name_regularizer
 
@@ -11,8 +14,10 @@ class MasterModel:
     def __init__(self, data):
         self.master_result_data = None
         self.data = data
-        self.model = gurobipy.Model()
+        self.model = gp.Model()
         self.vars = dict()
+        self.best_obj = None
+        self.cut_generator = GenerateCut(data)
 
     def construct(self):
         """
@@ -29,7 +34,7 @@ class MasterModel:
         self.add_relaxed_sub_constrains()  # 添加有效割约束
         self.set_parameters()
 
-    def solve(self, lbbd_cut_data):
+    def solve_lbbd(self, lbbd_cut_data):
         """
         迭代过程的建模和求解主题函数：
         1. 添加Benders割
@@ -41,6 +46,7 @@ class MasterModel:
         result = self.gen_model_result()
         return result
 
+
     def add_relaxed_sub_variables(self):
         """
         添加子问题的松弛变量
@@ -49,7 +55,7 @@ class MasterModel:
         logger.info('添加变量：松弛子问题变量Z_osT')
         self.vars[VarName.HAT_Z] = {(order, supplier, month): self.model.addVar(
             name=var_name_regularizer(f'V_{VarName.HAT_Z}({order}_{supplier}_{month})'),
-            vtype=gurobipy.GRB.CONTINUOUS)
+            vtype=gp.GRB.CONTINUOUS)
             for item in self.data[SetName.ITEM_LIST]
             for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
             for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]
@@ -59,7 +65,7 @@ class MasterModel:
             logger.info('添加变量：松弛子问题辅助变量nu_m\hat_t')
             self.vars[VarName.NU] = {(machine, month): self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.NU}({machine}_{month})'),
-                vtype=gurobipy.GRB.BINARY)
+                vtype=gp.GRB.BINARY)
                 for machine in self.data[SetName.MACHINE_LIST]
                 for month in self.data[SetName.MACHINE_TIME_MONTH_DICT][machine]
             }
@@ -68,7 +74,7 @@ class MasterModel:
         logger.info('添加变量：松弛子问题辅助变量kappa_st')
         self.vars[VarName.KAPPA] = {(supplier, date): self.model.addVar(
             name=var_name_regularizer(f'V_{VarName.KAPPA}({supplier}_{date})'),
-            vtype=gurobipy.GRB.CONTINUOUS)
+            vtype=gp.GRB.CONTINUOUS)
             for supplier in self.data[SetName.SUPPLIER_LIST]
             for date in self.data[SetName.TIME_LIST]}
 
@@ -80,7 +86,7 @@ class MasterModel:
             for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
                 for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]:
                     self.model.addConstr(
-                        gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                       gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                           for month in self.data[SetName.ORDER_TIME_MONTH_DICT][order]) ==
                         self.data[ParaName.ORDER_QUANTITY_DICT][order] * self.vars[VarName.ALPHA][
                             item, supplier])
@@ -88,14 +94,14 @@ class MasterModel:
         # =============
         # 月生产上限
         # =============
-        # supplimentary_lift-1 对于订单而言，月产量 <= min(款日上限，实体供应商日上限,产线月上限)
+        # supplimentary_2-1 对于订单而言，月产量 <= min(款日上限，实体供应商日上限,产线月上限)
         # for item in self.data[DAOptSetName.ITEM_LIST]:
             # item_max_occupy = self.data[DAOptParaName.ITEM_MAX_OCCUPY_DICT][item]
             # for supplier in self.data[DAOptSetName.SUPPLIER_BY_ITEM_DICT][item]:
             #     for month in self.data[DAOptSetName.ITEM_MONTH_DICT][item]:
             #         for order in self.data[DAOptSetName.ORDER_BY_ITEM_DICT][item]:
             #             if (order, supplier, month) in self.vars[VarName.HAT_Z]:
-                            # supplimentary_lift-1.1
+                            # supplimentary_2-1.1
                             # self.model.addConstr(
                             #     self.vars[DAOptVarName.HAT_Z][order, supplier, month] <=
                             #     sum(min(item_max_occupy,
@@ -104,7 +110,7 @@ class MasterModel:
                             #         for date in self.data[DAOptSetName.ORDER_TIME_DICT][order] if
                             #         date[:7] == month)
                             # )
-                            # supplimentary_lift-1.2
+                            # supplimentary_2-1.2
                             # self.model.addConstr(self.vars[VarName.HAT_Z][order, supplier, month] <= sum(
                             #                      self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                             #                          (machine, month), 0)
@@ -113,14 +119,14 @@ class MasterModel:
                             #                          set(self.data[DAOptSetName.MACHINE_BY_ORDER_DICT][order]))
                             #                  ))
 
-        # supplimentary_lift-2 对于款式而言，月产量 <= min(款日上限，实体供应商日上限, 产线月产能)
+        # supplimentary_2-2 对于款式而言，月产量 <= min(款日上限，实体供应商日上限, 产线月产能)
         for item in self.data[SetName.ITEM_LIST]:
             item_max_occupy = self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]
             for month in self.data[SetName.ITEM_MONTH_DICT][item]:
                 for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]:
-                    # supplimentary_lift-2.1
+                    # supplimentary_2-2.1
                     self.model.addConstr(
-                        gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                       gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                           for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                           if (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
                         sum(min(item_max_occupy,
@@ -128,41 +134,41 @@ class MasterModel:
                                                                                                      self.data[ParaName.MAX_QUANTITY]))
                             for date in self.data[SetName.ITEM_TIME_DICT][item] if
                             date[:7] == month))
-                    # supplimentary_lift-2.2
+                    # supplimentary_2-2.2
                     self.model.addConstr(
-                        gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                       gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                           for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                           if (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
-                        gurobipy.quicksum(
+                       gp.quicksum(
                             self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0)
                             for machine in set.intersection(
                                 set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
                                 set(self.data[SetName.MACHINE_BY_ITEM_DICT][item])))
                     )
 
-        # supplimentary_lift-3 对于供应商而言，月产量 <= min(实体供应商日上限，sum(款式日上限)，产线月上限)
+        # supplimentary_2-3 对于供应商而言，月产量 <= min(实体供应商日上限，sum(款式日上限)，产线月上限)
         for supplier in self.data[SetName.SUPPLIER_LIST]:
             for month in self.data[SetName.TIME_MONTH_LIST]:
-                # supplimentary_lift-3.1
-                self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                # supplimentary_2-3.1
+                self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                        for item in
                                                        self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
                                                        for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                        if (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
-                                     gurobipy.quicksum(
+                                    gp.quicksum(
                                          self.vars[VarName.KAPPA][supplier, date]
                                          for date in self.data[SetName.TIME_BY_MONTH_DICT][month] if
                                          date[:7] == month and (supplier, date) in self.vars[VarName.KAPPA])
                                      )
                 if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
-                    # supplimentary_lift-3.2
-                    self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                    # supplimentary_2-3.2
+                    self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                            for item in
                                                            self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
                                                            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                            if
                                                            (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
-                                         gurobipy.quicksum(
+                                        gp.quicksum(
                                              self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                                                  (machine, month), 0)
                                              * self.vars[VarName.NU][machine, month]
@@ -170,8 +176,8 @@ class MasterModel:
                                              if (machine, month) in self.vars[VarName.NU]
                                          ))
                 else:
-                    # supplimentary_lift-3.2
-                    self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                    # supplimentary_2-3.2
+                    self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                            for item in
                                                            self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
                                                            for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
@@ -182,20 +188,20 @@ class MasterModel:
                                              for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
                                          ))
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 0:
-            # supplimentary_lift-4 对于具有交叉可用machine的情况而言，集合a内部的产量<= 集合a对应machine月产能
+            # supplimentary_2-4 对于具有交叉可用machine的情况而言，集合a内部的产量<= 集合a对应machine月产能
             for supplier in self.data[SetName.SUPPLIER_LIST]:
                 for month in self.data[SetName.TIME_MONTH_LIST]:
                     for idx in range(len(self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier])):
                         machine_subset = self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier][idx]
                         item_subset = self.data[SetName.ITEM_SUB_SETS_BY_SUPPLIER_DICT][supplier][idx]
                         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
-                            self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                            self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                                    for item in item_subset
                                                                    for order in
                                                                    self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                                    if (order, supplier, month) in self.vars[
                                                                        VarName.HAT_Z]) <=
-                                                 gurobipy.quicksum(
+                                                gp.quicksum(
                                                      self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                                                          (machine, month), 0)
                                                      * self.vars[VarName.NU][machine, month]
@@ -203,24 +209,24 @@ class MasterModel:
                                                      if (machine, month) in self.vars[VarName.NU]
                                                  ))
                         else:
-                            self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                            self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                                    for item in item_subset
                                                                    for order in
                                                                    self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                                    if (order, supplier, month) in self.vars[
                                                                        VarName.HAT_Z]) <=
-                                                 gurobipy.quicksum(
+                                                gp.quicksum(
                                                      self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                                                          (machine, month), 0)
                                                      for machine in machine_subset
                                                  ))
         elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 1:
-            # supplimentary_lift-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
+            # supplimentary_2-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
             for supplier in self.data[SetName.SUPPLIER_LIST]:
                 for channel in self.data[SetName.CHANNEL_LIST]:
                     for month in self.data[SetName.TIME_MONTH_LIST]:
                         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
-                            self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                            self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                                    for item in
                                                                    set.intersection(set(
                                                                        self.data[SetName.ITEM_BY_SUPPLIER_DICT][
@@ -232,7 +238,7 @@ class MasterModel:
                                                                    self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                                    if (order, supplier, month) in self.vars[
                                                                        VarName.HAT_Z]) <=
-                                                 gurobipy.quicksum(
+                                                gp.quicksum(
                                                      self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                                                          (machine, month), 0)
                                                      * self.vars[VarName.NU][machine, month]
@@ -242,7 +248,7 @@ class MasterModel:
                                                      if (machine, month) in self.vars[VarName.NU]
                                                  ))
                         else:
-                            self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                            self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                                    for item in
                                                                    set.intersection(set(
                                                                        self.data[SetName.ITEM_BY_SUPPLIER_DICT][
@@ -262,12 +268,12 @@ class MasterModel:
                                                          set(self.data[SetName.MACHINE_BY_CHANNEL_DICT][channel]))
                                                  ))
         elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 2:
-            # supplimentary_lift-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
+            # supplimentary_2-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
             for supplier in self.data[SetName.SUPPLIER_LIST]:
                 for label in self.data[SetName.LABEL_LIST]:
                         for month in self.data[SetName.TIME_MONTH_LIST]:
                             if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
-                                self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                                self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                                        for item in
                                                                        set.intersection(set(
                                                                            self.data[SetName.ITEM_BY_SUPPLIER_DICT][
@@ -279,7 +285,7 @@ class MasterModel:
                                                                        self.data[SetName.ORDER_BY_ITEM_DICT][item]
                                                                        if (order, supplier, month) in self.vars[
                                                                            VarName.HAT_Z]) <=
-                                                     gurobipy.quicksum(
+                                                    gp.quicksum(
                                                          self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
                                                              (machine, month), 0)
                                                          * self.vars[VarName.NU][machine, month]
@@ -290,7 +296,7 @@ class MasterModel:
                                                          if (machine, month) in self.vars[VarName.NU]
                                                      ))
                             else:
-                                self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                                self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
                                                                        for item in
                                                                        set.intersection(set(
                                                                            self.data[SetName.ITEM_BY_SUPPLIER_DICT][
@@ -326,11 +332,11 @@ class MasterModel:
                                 if machine in self.data[SetName.MACHINE_BY_ORDER_DICT][order]:
                                     item_list.append(item)
                                     break
-                    # supplimentary_lift-5.1
+                    # supplimentary_2-5.1
                     self.model.addConstr(
                         self.vars[VarName.NU][machine, month] <=
-                        gurobipy.quicksum(self.vars[VarName.ALPHA][item, supplier] for item in item_list))
-                    # 有效不等式，不会去掉最优解 # supplimentary_lift-5.2
+                       gp.quicksum(self.vars[VarName.ALPHA][item, supplier] for item in item_list))
+                    # 有效不等式，不会去掉最优解 # supplimentary_2-5.2
                     for item in item_list:
                         self.model.addConstr(
                             self.vars[VarName.NU][machine, month] >=
@@ -371,7 +377,7 @@ class MasterModel:
                 if len(item_list) > 0:
                     self.model.addConstr(
                         self.vars[VarName.KAPPA][supplier, date] <=
-                        gurobipy.quicksum(item_max_occupy_dict[item] * self.vars[VarName.ALPHA][item, supplier]
+                       gp.quicksum(item_max_occupy_dict[item] * self.vars[VarName.ALPHA][item, supplier]
                                           for item in item_list
                                           ))
                 else:
@@ -388,7 +394,7 @@ class MasterModel:
             for item_list in self.lbbd_cut_data[
             LBBDCutName.INFEASIBLE_ITEM_SET_LIST_BY_SUPPLIER_DICT][supplier]:
                 self.model.addConstr(
-                    gurobipy.quicksum(self.vars[VarName.ALPHA][item, supplier]
+                   gp.quicksum(self.vars[VarName.ALPHA][item, supplier]
                                       for item in item_list)
                     - len(item_list)
                     <= -1
@@ -397,7 +403,7 @@ class MasterModel:
         for supplier in self.lbbd_cut_data[
             LBBDCutName.MIS_BY_SUPPLIER_DICT]:
             self.model.addConstr(
-                gurobipy.quicksum(self.vars[VarName.ALPHA][item, supplier]
+               gp.quicksum(self.vars[VarName.ALPHA][item, supplier]
                                   for item in self.lbbd_cut_data[
                                       LBBDCutName.MIS_BY_SUPPLIER_DICT][
                                       supplier])
@@ -416,7 +422,7 @@ class MasterModel:
         # 款相关变量
         # =============
         logger.info('添加变量：单款生产变量alpha')
-        self.vars[VarName.ALPHA] = {(item, supplier): self.model.addVar(vtype=gurobipy.GRB.BINARY,
+        self.vars[VarName.ALPHA] = {(item, supplier): self.model.addVar(vtype=gp.GRB.BINARY,
                                                                         name=var_name_regularizer(
                                                                                  f'V_{VarName.ALPHA}({item}_{supplier})'),
                                                                         column=None, obj=0.0, lb=0.0, ub=1.0)
@@ -431,14 +437,14 @@ class MasterModel:
         # 平均产能规划达成率
         self.vars[VarName.SUPPLIER_CAPACITY_RATIO] = {supplier: self.model.addVar(
             name=var_name_regularizer(f'V_{VarName.SUPPLIER_CAPACITY_RATIO}_{supplier}'),
-            vtype=gurobipy.GRB.CONTINUOUS, lb=0)
+            vtype=gp.GRB.CONTINUOUS, lb=0)
             for supplier in self.data[SetName.SUPPLIER_LIST]
         }
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_AVERAGE_OBJ]:
             # 供应商产能规划达成率与池内平均规划率的差值
             self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA] = {supplier: self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.SUPPLIER_CAPACITY_RATIO_DELTA}_{supplier}'),
-                vtype=gurobipy.GRB.CONTINUOUS, lb=0)
+                vtype=gp.GRB.CONTINUOUS, lb=0)
                 for supplier in self.data[SetName.SUPPLIER_LIST]
             }
 
@@ -446,14 +452,14 @@ class MasterModel:
             # 池内平均产能规划达成率
             self.vars[VarName.POOL_CAPACITY_RATIO_AVG] = {pool: self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.POOL_CAPACITY_RATIO_AVG}_{pool}'),
-                vtype=gurobipy.GRB.CONTINUOUS, lb=0)
+                vtype=gp.GRB.CONTINUOUS, lb=0)
                 for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]
                 if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]) > 0
             }
             # 供应商池子不符合阶梯性的达成率部分, pool_1（等级更高）相比pool_2平均达成率低的部分
             self.vars[VarName.POOLS_CAPACITY_RATIO_DELTA] = {(pool_1, pool_2): self.model.addVar(
                 name=var_name_regularizer(f'V_{VarName.POOLS_CAPACITY_RATIO_DELTA}_{pool_1}_{pool_2}'),
-                vtype=gurobipy.GRB.CONTINUOUS, lb=0)
+                vtype=gp.GRB.CONTINUOUS, lb=0)
                 for pool_1 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
                 for pool_2 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
                 if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool_1]) > 0
@@ -476,11 +482,11 @@ class MasterModel:
         # 款式内订单延误
         # =============
         logger.info('模型添加优化目标：订单延误最少')
-        order_delay_obj = gurobipy.quicksum(
+        order_delay_obj =gp.quicksum(
             (self.data[ObjCoeffName.ORDER_DELAY_BASE_PUNISH]
              + self.data[ObjCoeffName.ORDER_DELAY_PUNISH] * self.data[ParaName.ORDER_QUANTITY_DICT][
                  order]) *
-            (1 - gurobipy.quicksum(
+            (1 -gp.quicksum(
                 self.vars[VarName.ALPHA][self.data[ParaName.ORDER_ITEM_DICT][order], supplier]
                 for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][
                     self.data[ParaName.ORDER_ITEM_DICT][order]]))
@@ -494,7 +500,7 @@ class MasterModel:
             # 产能规划达成率
             # =============
             logger.info('模型添加优化目标：池内实体供应商产能规划达成率均衡')
-            capacity_average_obj = gurobipy.quicksum(
+            capacity_average_obj =gp.quicksum(
                 self.data[ObjCoeffName.CAPACITY_AVERAGE_PUNISH]
                 * self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier]
                 for supplier in self.data[SetName.SUPPLIER_LIST]
@@ -505,7 +511,7 @@ class MasterModel:
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_LADDEL_OBJ]:
             logger.info('模型添加优化目标：池子内产能规划达成率均值呈现阶梯')
-            capacity_ladder_obj = self.data[ObjCoeffName.SUPPLIER_LADDER_PUNISH] * gurobipy.quicksum(
+            capacity_ladder_obj = self.data[ObjCoeffName.SUPPLIER_LADDER_PUNISH] *gp.quicksum(
                 self.vars[VarName.POOLS_CAPACITY_RATIO_DELTA][pool_1, pool_2]
                 for pool_1 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
                 for pool_2 in self.data[SetName.SUPPLIER_BY_POOL_DICT]
@@ -515,7 +521,7 @@ class MasterModel:
             self.data[ObjName.CAPACITY_LADDER_OBJ] = capacity_ladder_obj
             obj += capacity_ladder_obj
 
-        self.model.setObjective(obj, gurobipy.GRB.MINIMIZE)
+        self.model.setObjective(obj, gp.GRB.MINIMIZE)
 
     def add_constrains(self):
         """
@@ -528,7 +534,7 @@ class MasterModel:
         logger.info('模型添加约束：单款只能在一个实体供应商进行生产')
         for item in self.data[SetName.ITEM_LIST]:
             self.model.addConstr(
-                gurobipy.quicksum(
+               gp.quicksum(
                     self.vars[VarName.ALPHA][item, supplier] for supplier in
                     self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]
                 ) <= 1,
@@ -542,7 +548,7 @@ class MasterModel:
             for supplier in self.data[SetName.SUPPLIER_LIST]:
                 self.model.addConstr(
                     self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier] ==
-                    gurobipy.quicksum(
+                   gp.quicksum(
                         self.vars[VarName.ALPHA][item, supplier] *
                         self.data[ParaName.ITEM_QUANTITY_DICT][
                             item]
@@ -573,7 +579,7 @@ class MasterModel:
             for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
                 if len(self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]) > 0:
                     self.model.addConstr(
-                        gurobipy.quicksum(
+                       gp.quicksum(
                             self.vars[VarName.ALPHA][item, supplier] *
                             self.data[ParaName.ITEM_QUANTITY_DICT][
                                 item]
@@ -602,14 +608,59 @@ class MasterModel:
                             name=f"planned_capacity_ratio_delta_of_{pool_1}_and_{pool_2}"
                         )
 
+    def my_callback(self, model, where):
+        if where == gp.GRB.Callback.MIP:
+            sol_obj = self.model.cbGet(gp.GRB.Callback.MIP_OBJBST)
+            if self.best_obj is None or sol_obj < self.best_obj:
+                self.best_obj = sol_obj
+                # 添加 user cut
+                # 款分配至实体供应商结果
+                item_supplier_result = dict()
+                for (item, supplier), var in self.vars[VarName.ALPHA].items():
+                    value = var.x
+                    if value > 0.001:
+                        if supplier in item_supplier_result:
+                            item_supplier_result[supplier].append(item)
+                        else:
+                            item_supplier_result[supplier] = [item]
+                for supplier in item_supplier_result:
+                    sub_data = self.cal_sub_data(supplier, item_supplier_result[supplier])
+                    sub_model = SubModel(self.data, sub_data)
+                    sub_model.construct()
+                    is_feasible = sub_model.solve(mode=1)
+                    if not is_feasible:
+                        # 调用寻找benders cut函数
+                        item_list, mis_size = self.cut_generator.generate_mis(sub_model)
+                        self.model.cbLazy(
+                            gp.quicksum(self.vars[VarName.ALPHA][item, supplier]
+                                        for item in item_list)
+                            - mis_size
+                            <= -1
+                        )
+                self.model.update()
+    def cal_sub_data(self, supplier, item_list):
+        sub_data = dict()
+        sub_data[LBBDSubDataName.SUPPLIER] = supplier
+        sub_data[LBBDSubDataName.ITEM_LIST] = item_list
+        sub_data[LBBDSubDataName.ORDER_LIST] = list()
+        for item in item_list:
+            sub_data[LBBDSubDataName.ORDER_LIST].extend(self.data[SetName.ORDER_BY_ITEM_DICT][item])
+        sub_data[LBBDSubDataName.MACHINE_LIST] = self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+        return sub_data
+
     def set_parameters(self):
         """
         设置模型求解的参数
         :return:
         """
-        self.model.setParam(gurobipy.GRB.Param.TimeLimit, ParamsMark.ALL_PARAMS_DICT[ParamsMark.MAX_RUNTIME])  # 求解时间上限
-        self.model.setParam(gurobipy.GRB.Param.MIPGap, ParamsMark.ALL_PARAMS_DICT[ParamsMark.MIP_GAP])  # 给定停止的Gap
-        # self.model.setParam(gurobipy.GRB.Param.OutputFlag, 0)
+        self.model.setParam(gp.GRB.Param.TimeLimit, ParamsMark.ALL_PARAMS_DICT[ParamsMark.MAX_RUNTIME])  # 求解时间上限
+        self.model.setParam(gp.GRB.Param.MIPGap, ParamsMark.ALL_PARAMS_DICT[ParamsMark.MIP_GAP])  # 给定停止的Gap
+        # self.model.setParam(gp.GRB.Param.OutputFlag, 0)
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 2:
+            self.model.setParam('LazyConstraints', 1)
+            self.model.callback_add(self.my_callback, where=gp.GRB.Callback.MIPSOL)
+
+
 
     def gen_model_result(self):
         """
@@ -618,7 +669,7 @@ class MasterModel:
         """
         self.model.optimize()
 
-        if self.model.Status in [gurobipy.GRB.Status.INFEASIBLE, gurobipy.GRB.Status.UNBOUNDED]:
+        if self.model.Status in [gp.GRB.Status.INFEASIBLE, gp.GRB.Status.UNBOUNDED]:
             self.model.computeIIS()
             error_info = '!!! 没有可行解 !!!'
             logger.error(error_info)

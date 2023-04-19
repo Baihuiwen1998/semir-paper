@@ -7,7 +7,7 @@ import pandas as pd
 from ce_analysis import ModelAnalysis
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare import FeaturePrepare
-from models.full_model_alpha import FullModelAlpha
+from models.full_model.full_model_alpha import FullModelAlpha
 from constant.config import *
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)

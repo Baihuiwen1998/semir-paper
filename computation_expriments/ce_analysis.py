@@ -5,16 +5,16 @@
 import copy
 import logging
 from constant.config import *
+from util.header import ParamsMark
 
 logger = logging.getLogger(__name__)
 
 
 class ModelAnalysis:
 
-    def __init__(self, data, result, mode):
+    def __init__(self, data, result):
         self.data = data
         self.result = result
-        self.mode = mode  # 0-整体模型  # 1-lbbd模型
 
     def analysis_result(self):
         """
@@ -27,7 +27,7 @@ class ModelAnalysis:
 
     def correctness_analyse(self):
         finished_rate_list = list()
-        if self.mode == 1:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 1:
             result = dict()
             item_supplier = dict()
             order_machine_date = dict()
@@ -126,7 +126,6 @@ class ModelAnalysis:
                         f"{month}_产线_{machine}_的产量_{sum_machine_month_production}_超过月上限_{self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0)}")
                     return False, None
 
-        # 池内的最大和最小产能规划达成率 和平均达成率
         # 池内的最大和最小产能规划达成率 和平均达成率
         for pool in self.result[ResultName.POOL_CAPACITY_RATIO_AVG]:
             logger.info(f"{pool}_的平均产能规划达成率为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_AVG][pool], '.4f')}")

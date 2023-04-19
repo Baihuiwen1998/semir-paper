@@ -12,10 +12,9 @@ logger = logging.getLogger(__name__)
 
 class ModelAnalysis:
 
-    def __init__(self, data, result, mode):
+    def __init__(self, data, result):
         self.data = data
         self.result = result
-        self.mode = mode  # 0-整体模型  # 1-lbbd模型
 
     def analysis_result(self):
         """
@@ -27,7 +26,7 @@ class ModelAnalysis:
         return is_correct
 
     def correctness_analyse(self):
-        if self.mode == 1:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 1:
             result = dict()
             item_supplier = dict()
             order_machine_date = dict()

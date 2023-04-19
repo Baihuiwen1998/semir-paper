@@ -12,10 +12,10 @@ logging.basicConfig(level=logging.DEBUG, format=formatter)
 
 
 class FeaturePrepare:
-    def __init__(self, data, filename, solution_mode):
+    def __init__(self, data, filename):
         self.data = data
         self.filename = filename
-        self.solution_mode = solution_mode
+
 
     def prepare(self):
         """
@@ -26,9 +26,10 @@ class FeaturePrepare:
         """
         self.gen_model_sets()
         self.gen_model_params()
+        self.gen_model_params()
         self.gen_match_sets_and_params()
         self.filter_data()
-        if self.solution_mode == 1 and ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 0:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0 and ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 0:
             self.gen_sub_item_machine_sets()
         self.gen_model_coefficients()
         self.print_model_info()

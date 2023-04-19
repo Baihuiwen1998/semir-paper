@@ -1,7 +1,6 @@
 import logging
-import gurobipy
+import gurobipy as gp
 from constant.config import *
-from util.header import ImportanceMark
 from util.util import var_name_regularizer
 
 logger = logging.getLogger(__name__)
@@ -15,7 +14,7 @@ class RelaxedSubModel:
     def __init__(self, data, sub_data, mis_size, relax_mode):
         self.supplier = sub_data[LBBDSubDataName.SUPPLIER]
         self.data = data
-        self.model = gurobipy.Model()
+        self.model = gp.Model()
         self.vars = dict()
         self.sub_data = sub_data  # 子问题迭代过程所需数据
         self.is_feasible = None
@@ -44,7 +43,7 @@ class RelaxedSubModel:
         # 订单生产相关变量
         # =============
         # logger.info('添加变量：订单生产变量alpha')
-        self.vars[VarName.ALPHA] = {item: self.model.addVar(vtype=gurobipy.GRB.BINARY,
+        self.vars[VarName.ALPHA] = {item: self.model.addVar(vtype=gp.GRB.BINARY,
                                                             name=var_name_regularizer(
                                                                 f'V_{VarName.ALPHA}({item})'),
                                                             column=None, obj=0.0, lb=0.0, ub=1.0)
@@ -53,7 +52,7 @@ class RelaxedSubModel:
         # logger.info('添加变量：订单生产变量z')
         self.vars[VarName.Z] = {(order, machine, date): self.model.addVar(
             name=var_name_regularizer(f'V_{VarName.Z}({order}_{machine}_{date})'),
-            vtype=gurobipy.GRB.INTEGER)
+            vtype=gp.GRB.INTEGER)
             for item in self.sub_data[LBBDSubDataName.ITEM_LIST]
             for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
             for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
@@ -64,11 +63,11 @@ class RelaxedSubModel:
     def add_objective(self):
 
         if self.relax_mode == 3:
-            item_product_opt_obj = -100 * gurobipy.quicksum(self.vars[VarName.ALPHA][item] for item in
+            item_product_opt_obj = -100 * gp.quicksum(self.vars[VarName.ALPHA][item] for item in
                                                             self.sub_data[LBBDSubDataName.ITEM_LIST])
-            self.model.setObjective(item_product_opt_obj, gurobipy.GRB.MINIMIZE)
+            self.model.setObjective(item_product_opt_obj, gp.GRB.MINIMIZE)
         else:
-            self.model.setObjective(0, gurobipy.GRB.MINIMIZE)
+            self.model.setObjective(0, gp.GRB.MINIMIZE)
 
     def add_constrains(self):
         """
@@ -80,7 +79,7 @@ class RelaxedSubModel:
         # =============
         if self.relax_mode == 1:
             self.model.addConstr(
-                gurobipy.quicksum(self.vars[VarName.ALPHA][item] for item in
+                gp.quicksum(self.vars[VarName.ALPHA][item] for item in
                                   self.sub_data[LBBDSubDataName.ITEM_LIST]) == self.mis_size)
 
         # =============
@@ -89,7 +88,7 @@ class RelaxedSubModel:
         # logger.info('模型添加约束：需求量生产')
         for item in self.sub_data[LBBDSubDataName.ITEM_LIST]:
             for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
-                self.model.addConstr(gurobipy.quicksum(
+                self.model.addConstr(gp.quicksum(
                     self.vars[VarName.Z][order, machine, date]
                     for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
                                                     set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT].get(
@@ -104,7 +103,7 @@ class RelaxedSubModel:
         # logger.info('模型添加约束：对款的单日生产上限限制')
         for item in self.sub_data[LBBDSubDataName.ITEM_LIST]:
             for date in self.data[SetName.ITEM_TIME_DICT][item]:
-                self.model.addConstr(gurobipy.quicksum(
+                self.model.addConstr(gp.quicksum(
                     self.vars[VarName.Z].get((order, machine, date), 0) for order in
                     self.data[SetName.ORDER_BY_ITEM_DICT][item]
                     for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
@@ -121,7 +120,7 @@ class RelaxedSubModel:
             if self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][self.supplier][date] >= 0 and date in \
                     self.data[SetName.TIME_LIST]:
                 self.model.addConstr(
-                    gurobipy.quicksum(
+                    gp.quicksum(
                         self.vars[VarName.Z][order, machine, date]
                         for item in self.sub_data[LBBDSubDataName.ITEM_LIST]
                         for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
@@ -138,7 +137,7 @@ class RelaxedSubModel:
         # logger.info('模型添加约束：产线产能月上限')
         for machine in self.sub_data[LBBDSubDataName.MACHINE_LIST]:
             for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, []):
-                self.model.addConstr(gurobipy.quicksum(
+                self.model.addConstr(gp.quicksum(
                     self.vars[VarName.Z].get((order, machine, date), 0)
                     for order in set.intersection(set(self.sub_data[LBBDSubDataName.ORDER_LIST]),
                                                   set(self.data[SetName.ORDER_BY_MACHINE_DICT][machine]))
@@ -175,20 +174,20 @@ class RelaxedSubModel:
         :return:
         """
         if mode == 1:
-            self.model.setParam(gurobipy.GRB.Param.OutputFlag, 0)
+            self.model.setParam(gp.GRB.Param.OutputFlag, 0)
             # 判断模型是否可行，所以只要找到一个可行解就停止
-            self.model.setParam(gurobipy.GRB.Param.SolutionLimit, 1)
+            self.model.setParam(gp.GRB.Param.SolutionLimit, 1)
         elif mode == 2:
-            # self.model.setParam(gurobipy.GRB.Param.OutputFlag, 1)
+            # self.model.setParam(gp.GRB.Param.OutputFlag, 1)
             # 求最优解
-            self.model.setParam(gurobipy.GRB.Param.SolutionLimit, 2000000000)
+            self.model.setParam(gp.GRB.Param.SolutionLimit, 2000000000)
         elif mode == 3:
-            self.model.setParam(gurobipy.GRB.Param.SolutionLimit, 2000000000)
+            self.model.setParam(gp.GRB.Param.SolutionLimit, 2000000000)
 
     def gen_model_result(self, mode):
         # logger.info('求解供应商{}子问题'.format(self.supplier))
         self.model.optimize()
-        if self.model.Status in [gurobipy.GRB.Status.INFEASIBLE, gurobipy.GRB.Status.UNBOUNDED]:
+        if self.model.Status in [gp.GRB.Status.INFEASIBLE, gp.GRB.Status.UNBOUNDED]:
             # error_info = '{} !!! 子问题没有可行解 !!!'.format(self.supplier)
             # logger.info(error_info)
             self.is_feasible = False

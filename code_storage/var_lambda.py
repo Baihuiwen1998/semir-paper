@@ -19,11 +19,11 @@
 #                 for item in self.data[DAOptSetName.ITEM_BY_SUPPLIER_DICT].get(supplier, []):
 #                     if date in self.data[DAOptSetName.ITEM_TIME_DICT][item]:
 #                         item_list.append(item)
-#                 # supplimentary_lift-6.1
+#                 # supplimentary_2-6.1
 #                 self.model.addConstr(
 #                     self.vars[VarName.LAMBDA][supplier, date] <=
 #                     gurobipy.quicksum(self.vars[VarName.ALPHA][item, supplier] for item in item_list))
-#                 # supplimentary_lift-6.2
+#                 # supplimentary_2-6.2
 #                 for item in item_list:
 #                     self.model.addConstr(
 #                         self.vars[VarName.LAMBDA][supplier, date] >=
