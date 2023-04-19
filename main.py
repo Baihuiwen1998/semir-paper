@@ -1,4 +1,5 @@
 import logging
+import os
 
 from analysis import ModelAnalysis
 from models.full_model.full_model_beta import FullModelBeta
@@ -14,9 +15,10 @@ logging.basicConfig(level=logging.DEBUG, format=formatter)
 logger = logging.getLogger(__name__)
 
 def main():
-    ori_dir = "D:/Codes/Python/semir-paper/"
-    input_dir = ori_dir+"data/input/synthetic_data/"
-    file_name = 'D/D_5_uat_1_full_梭织/'
+
+    ori_dir = os.getcwd()
+    input_dir = ori_dir+"/data/input/synthetic_data/"
+    file_name = 'D/D_3_uat_1_full_梭织/'
 
     # 数据处理
     dp = DataPrepare(input_dir, file_name)

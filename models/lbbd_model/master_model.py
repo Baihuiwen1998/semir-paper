@@ -2,13 +2,70 @@ import logging
 import gurobipy as gp
 from constant.config import *
 from models.lbbd_model.generate_cut import GenerateCut
-from models.lbbd_model.my_call_back import MyCallBack
 from models.lbbd_model.sub_model import SubModel
-from util.header import ImportanceMark, ParamsMark
+from util.header import ImportanceMark, ParamsMark, GLOBALDATA
 from util.util import var_name_regularizer
 
 logger = logging.getLogger(__name__)
 
+def my_call_back(model, where):
+    if where == gp.GRB.Callback.MIPSOL:
+        # 添加 user cut
+        # 款分配至实体供应商结果
+        item_supplier_result = dict()
+        for (item, supplier) in GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.VARS][VarName.ALPHA]:
+            if model.cbGetSolution(GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.VARS][VarName.ALPHA][item, supplier]) > 0.001:
+                if supplier in item_supplier_result:
+                    item_supplier_result[supplier].append(item)
+                else:
+                    item_supplier_result[supplier] = [item]
+        for supplier in item_supplier_result:
+            sub_data = cal_sub_data(supplier, item_supplier_result[supplier])
+            sub_model = SubModel(GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA], sub_data)
+            sub_model.construct()
+            is_feasible = sub_model.solve(mode=1)
+            if not is_feasible:
+                # 调用寻找benders cut函数
+                item_list, mis_size = GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.CUT_GENERATOR].generate_mis(sub_model)
+                model.cbLazy(
+                    gp.quicksum(GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.VARS][VarName.ALPHA][item, supplier]
+                                for item in item_list)
+                    - mis_size
+                    <= -1
+                )
+                # print('[', end='')
+                # for item in item_list:
+                #     print(str(item), end=',')
+                # print(']')
+                # print("<", str(mis_size))
+
+                # add cut to other suppliers
+                for supplier_other in GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA][SetName.SUPPLIER_LIST]:
+                    if supplier != supplier_other:
+                        filtered_item_list = set.intersection(set(item_list), set(GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA][SetName.ITEM_BY_SUPPLIER_DICT][supplier_other]))
+                        sub_data = cal_sub_data(supplier_other, filtered_item_list)
+                        sub_model = SubModel(GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA], sub_data)
+                        sub_model.construct()
+                        is_feasible = sub_model.solve(mode=1)
+                        if not is_feasible:
+                            model.cbLazy(
+                                gp.quicksum(
+                                    GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.VARS][VarName.ALPHA][item, supplier_other]
+                                    for item in filtered_item_list)
+                                - len(filtered_item_list)
+                                <= -1
+                            )
+        model.update()
+
+def cal_sub_data(supplier, item_list):
+    sub_data = dict()
+    sub_data[LBBDSubDataName.SUPPLIER] = supplier
+    sub_data[LBBDSubDataName.ITEM_LIST] = item_list
+    sub_data[LBBDSubDataName.ORDER_LIST] = list()
+    for item in item_list:
+        sub_data[LBBDSubDataName.ORDER_LIST].extend(GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA][SetName.ORDER_BY_ITEM_DICT][item])
+    sub_data[LBBDSubDataName.MACHINE_LIST] = GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA][SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+    return sub_data
 
 class MasterModel:
     def __init__(self, data):
@@ -18,6 +75,7 @@ class MasterModel:
         self.vars = dict()
         self.best_obj = None
         self.cut_generator = GenerateCut(data)
+        self.cb = None
 
     def construct(self):
         """
@@ -608,36 +666,6 @@ class MasterModel:
                             name=f"planned_capacity_ratio_delta_of_{pool_1}_and_{pool_2}"
                         )
 
-    def my_callback(self, model, where):
-        if where == gp.GRB.Callback.MIP:
-            sol_obj = self.model.cbGet(gp.GRB.Callback.MIP_OBJBST)
-            if self.best_obj is None or sol_obj < self.best_obj:
-                self.best_obj = sol_obj
-                # 添加 user cut
-                # 款分配至实体供应商结果
-                item_supplier_result = dict()
-                for (item, supplier), var in self.vars[VarName.ALPHA].items():
-                    value = var.x
-                    if value > 0.001:
-                        if supplier in item_supplier_result:
-                            item_supplier_result[supplier].append(item)
-                        else:
-                            item_supplier_result[supplier] = [item]
-                for supplier in item_supplier_result:
-                    sub_data = self.cal_sub_data(supplier, item_supplier_result[supplier])
-                    sub_model = SubModel(self.data, sub_data)
-                    sub_model.construct()
-                    is_feasible = sub_model.solve(mode=1)
-                    if not is_feasible:
-                        # 调用寻找benders cut函数
-                        item_list, mis_size = self.cut_generator.generate_mis(sub_model)
-                        self.model.cbLazy(
-                            gp.quicksum(self.vars[VarName.ALPHA][item, supplier]
-                                        for item in item_list)
-                            - mis_size
-                            <= -1
-                        )
-                self.model.update()
     def cal_sub_data(self, supplier, item_list):
         sub_data = dict()
         sub_data[LBBDSubDataName.SUPPLIER] = supplier
@@ -658,16 +686,20 @@ class MasterModel:
         # self.model.setParam(gp.GRB.Param.OutputFlag, 0)
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 2:
             self.model.setParam('LazyConstraints', 1)
-            self.model.callback_add(self.my_callback, where=gp.GRB.Callback.MIPSOL)
-
-
+            GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.VARS] = self.vars
+            GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA] = self.data
+            GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.CUT_GENERATOR] = GenerateCut(self.data)
+            self.model._cb = my_call_back
 
     def gen_model_result(self):
         """
         模型求解，并获取求解结果
         :return:
         """
-        self.model.optimize()
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 2:
+            self.model.optimize(self.model._cb)
+        else:
+            self.model.optimize()
 
         if self.model.Status in [gp.GRB.Status.INFEASIBLE, gp.GRB.Status.UNBOUNDED]:
             self.model.computeIIS()

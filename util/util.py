@@ -4,8 +4,6 @@ import datetime
 import functools
 import logging
 import os
-import pinyin
-import re
 import time
 import typing
 

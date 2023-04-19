@@ -29,7 +29,7 @@ class GenerateCut:
         elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.CUT_MODE] == 1:
             item_list = self.dfbs_gen_mis(sub_model)
         # 将MIS放到其他supplier上进行测试
-        # self.add_mis_to_other_suppliers(item_list, supplier)
+
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_LIFT]:
             return self.cut_lifting(sub_model, item_list)
         else:
@@ -133,7 +133,7 @@ class GenerateCut:
                 sub_model.construct()
                 if_feasible = sub_model.solve(mode=1)
                 if not if_feasible:
-                    # 不可行
+                    # # 不可行
                     # logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!")
                     # print('[', end='')
                     # for item in item_list:
@@ -173,20 +173,22 @@ class GenerateCut:
         return lifted_item_list, mis_size
 
 
-    # def add_mis_to_other_suppliers(self, item_list, tested_supplier):
-    #     """
-    #     :param item_list:
-    #     :return:
-    #     """
-    #     for supplier in self.data[SetName.SUPPLIER_LIST]:
-    #         if supplier != tested_supplier:
-    #             filtered_item_list = set.intersection(set(item_list), set(self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]))
-    #             sub_data = self.cal_sub_data(supplier, filtered_item_list)
-    #             sub_model = SubModel(self.data, sub_data)
-    #             sub_model.construct()
-    #             self.sub_models[supplier] = sub_model
-    #             is_feasible = sub_model.solve(mode=1)
-    #             if not is_feasible:
-    #                 self.lbbd_cut_data[LBBDCutName.INFEASIBLE_ITEM_SET_LIST_BY_SUPPLIER_DICT][supplier].append(filtered_item_list)
+    def add_mis_to_other_suppliers(self, item_list, tested_supplier):
+        """
+        :param item_list:
+        :return:
+        """
+        lbbd_cut_data = dict()
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
+            if supplier != tested_supplier:
+                filtered_item_list = set.intersection(set(item_list), set(self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]))
+                sub_data = self.cal_sub_data(supplier, filtered_item_list)
+                sub_model = SubModel(self.data, sub_data)
+                sub_model.construct()
+                self.sub_models[supplier] = sub_model
+                is_feasible = sub_model.solve(mode=1)
+                if not is_feasible:
+                    lbbd_cut_data[LBBDCutName.INFEASIBLE_ITEM_SET_LIST_BY_SUPPLIER_DICT][supplier].append(filtered_item_list)
 
+        return lbbd_cut_data
 

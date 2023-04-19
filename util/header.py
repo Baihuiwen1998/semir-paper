@@ -76,7 +76,7 @@ class ParamsMark:
     CUT_MODE = 'cut_mode'
     IS_LIFT = 'is_lift'
     ALL_PARAMS_DICT = {MAX_ITERATION: 500,
-                       MAX_RUNTIME: 7200,
+                       MAX_RUNTIME: 3600,
                        SHARE_LEVEL: 0,
                        CAPACITY_AVERAGE_OBJ: True,
                        CAPACITY_LADDEL_OBJ: True,
@@ -84,10 +84,18 @@ class ParamsMark:
                        MIP_GAP: 0.005,
                        ITEM_MULTI_SUPPLIER: False,
                        MILP_MODEL: 0,    # {0:alpha, 1:beta}
-                       SOLUTION_MODE: 1,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
-                       CUT_MODE: 0,      # {0: greedy, 1:dbfs}
+                       SOLUTION_MODE: 0,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
+                       CUT_MODE: 0,      # {0: greedy, 1: dbfs}
                        IS_LIFT: False
                        }
 
 
-
+class GLOBALDATA:
+    DATA = "data"
+    VARS = "vars"
+    CUT_GENERATOR = "cut_generator"
+    ALL_GLOBAL_DATA_DICT = {
+        DATA: None,
+        VARS: None,
+        CUT_GENERATOR: None
+    }
