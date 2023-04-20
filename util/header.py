@@ -81,10 +81,10 @@ class ParamsMark:
                        CAPACITY_AVERAGE_OBJ: True,
                        CAPACITY_LADDEL_OBJ: True,
                        NU_VAR: False,
-                       MIP_GAP: 0.005,
+                       MIP_GAP: 0.001,
                        ITEM_MULTI_SUPPLIER: False,
                        MILP_MODEL: 0,    # {0:alpha, 1:beta}
-                       SOLUTION_MODE: 0,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
+                       SOLUTION_MODE: 3,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
                        CUT_MODE: 0,      # {0: greedy, 1: dbfs}
                        IS_LIFT: False
                        }

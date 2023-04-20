@@ -40,21 +40,21 @@ def my_call_back(model, where):
                 # print("<", str(mis_size))
 
                 # add cut to other suppliers
-                for supplier_other in GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA][SetName.SUPPLIER_LIST]:
-                    if supplier != supplier_other:
-                        filtered_item_list = set.intersection(set(item_list), set(GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA][SetName.ITEM_BY_SUPPLIER_DICT][supplier_other]))
-                        sub_data = cal_sub_data(supplier_other, filtered_item_list)
-                        sub_model = SubModel(GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA], sub_data)
-                        sub_model.construct()
-                        is_feasible = sub_model.solve(mode=1)
-                        if not is_feasible:
-                            model.cbLazy(
-                                gp.quicksum(
-                                    GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.VARS][VarName.ALPHA][item, supplier_other]
-                                    for item in filtered_item_list)
-                                - len(filtered_item_list)
-                                <= -1
-                            )
+                # for supplier_other in GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA][SetName.SUPPLIER_LIST]:
+                #     if supplier != supplier_other:
+                #         filtered_item_list = set.intersection(set(item_list), set(GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA][SetName.ITEM_BY_SUPPLIER_DICT][supplier_other]))
+                #         sub_data = cal_sub_data(supplier_other, filtered_item_list)
+                #         sub_model = SubModel(GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.DATA], sub_data)
+                #         sub_model.construct()
+                #         is_feasible = sub_model.solve(mode=1)
+                #         if not is_feasible:
+                #             model.cbLazy(
+                #                 gp.quicksum(
+                #                     GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.VARS][VarName.ALPHA][item, supplier_other]
+                #                     for item in filtered_item_list)
+                #                 - len(filtered_item_list)
+                #                 <= -1
+                #             )
         model.update()
 
 def cal_sub_data(supplier, item_list):

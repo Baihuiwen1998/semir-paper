@@ -27,7 +27,7 @@ class ModelAnalysis:
 
     def correctness_analyse(self):
         finished_rate_list = list()
-        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 1:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0:
             result = dict()
             item_supplier = dict()
             order_machine_date = dict()
