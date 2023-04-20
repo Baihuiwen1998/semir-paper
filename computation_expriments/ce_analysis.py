@@ -2,9 +2,8 @@
 # @author: baihuiwen
 # @email: bhw21@mails.tsinghua.edu.cn
 # @date: 2022/03/24
-import copy
 import logging
-from constant.config import *
+from config import *
 from util.header import ParamsMark
 
 logger = logging.getLogger(__name__)

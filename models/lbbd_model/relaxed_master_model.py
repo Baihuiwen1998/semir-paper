@@ -1,6 +1,6 @@
 import logging
 import gurobipy
-from constant.config import *
+from config import *
 from util.header import ImportanceMark, ParamsMark
 from util.util import var_name_regularizer
 

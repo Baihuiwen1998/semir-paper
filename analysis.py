@@ -2,9 +2,8 @@
 # @author: baihuiwen
 # @email: bhw21@mails.tsinghua.edu.cn
 # @date: 2022/03/24
-import copy
 import logging
-from constant.config import *
+from config import *
 from util.header import ParamsMark
 
 logger = logging.getLogger(__name__)
@@ -26,7 +25,7 @@ class ModelAnalysis:
         return is_correct
 
     def correctness_analyse(self):
-        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 1:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0:
             result = dict()
             item_supplier = dict()
             order_machine_date = dict()
@@ -43,7 +42,7 @@ class ModelAnalysis:
         # 生产款式内需求的产量
         produced_item_set = set()
         produced_order_set = set()
-        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.MILP_MODEL] == 0:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.MILP_MODEL] == 0 or ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0:
             for (item, supplier) in self.result[ResultName.ITEM_SUPPLIER]:
                 produced_item_set.add(item)
                 for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:

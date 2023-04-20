@@ -1,11 +1,10 @@
 # @author: baihuiwen
 # @email: bhw21@mails.tsinghua.edu.cn
 # @date: 2023/3/17
-import logging
 import pandas as pd
 import copy
 import numpy as np
-from constant.config import *
+from config import *
 from util.raw_header import *
 from util.util import *
 

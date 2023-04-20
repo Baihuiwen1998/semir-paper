@@ -1,6 +1,6 @@
 import logging
 import gurobipy as gp
-from constant.config import *
+from config import *
 from models.lbbd_model.generate_cut import GenerateCut
 from models.lbbd_model.sub_model import SubModel
 from util.header import ImportanceMark, ParamsMark, GLOBALDATA

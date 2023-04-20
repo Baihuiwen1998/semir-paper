@@ -8,7 +8,7 @@ from ce_analysis import ModelAnalysis
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare import FeaturePrepare
 from models.full_model.full_model_alpha import FullModelAlpha
-from constant.config import *
+from config import *
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ def main():
             ol.append(data[DataName.ORDER].shape[0])
 
             # 特征处理
-            fp = FeaturePrepare(data, file_name, 0)
+            fp = FeaturePrepare(data, file_name)
             data = fp.prepare()
 
             ol.append(len(data[SetName.SUPPLIER_LIST]))
@@ -49,7 +49,7 @@ def main():
             result = full_model.gen_model_result()
             if result:
                 # 结果  检查 + 分析
-                ma = ModelAnalysis(data, result, 0)
+                ma = ModelAnalysis(data, result)
                 is_correct, finished_rate_list = ma.analysis_result()
                 if is_correct:
                     ol.append(full_model.model.objVal)

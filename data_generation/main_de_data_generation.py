@@ -13,7 +13,7 @@ main文件
 import os
 import logging
 
-from constant.config import *
+from config import *
 from data_generation.raw_data_prepare.load_raw_data import LoadRawData
 from data_generation.raw_data_prepare.transform_to_desensitized_data import TransformData
 from util.raw_header import FileName

@@ -1,6 +1,6 @@
 import numpy as np
 from util.raw_header import *
-from constant.config import *
+from config import *
 
 import pandas as pd
 

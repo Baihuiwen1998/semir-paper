@@ -5,30 +5,15 @@ import gurobipy
 import pandas as pd
 
 from ce_analysis import ModelAnalysis
-from models.full_model.full_model_alpha import FullModelAlpha
-from models.lbbd_model.lbbd import LogicBasedBenders
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare import FeaturePrepare
-from constant.config import *
+from config import *
 from models.lbbd_model.master_model import MasterModel
 from models.lbbd_model.sub_model import SubModel
-from util.header import ParamsMark
-
+from models.lbbd_model.generate_cut import cal_sub_data
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
 logger = logging.getLogger(__name__)
-
-
-def cal_sub_data(data, supplier, item_list):
-    sub_data = dict()
-    sub_data[LBBDSubDataName.SUPPLIER] = supplier
-    sub_data[LBBDSubDataName.ITEM_LIST] = item_list
-    sub_data[LBBDSubDataName.ORDER_LIST] = list()
-    for item in item_list:
-        sub_data[LBBDSubDataName.ORDER_LIST].extend(data[SetName.ORDER_BY_ITEM_DICT][item])
-    sub_data[LBBDSubDataName.MACHINE_LIST] = data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-    return sub_data
-
 
 def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
@@ -36,7 +21,7 @@ def main():
     output_dir = ori_dir+"data/output/B&CH/"
     # size_set = [ "uat_1_full", "da_type_2_online_solve"]
     # size_set = ["A"]        # , "B", "C", "D"]
-    size_set = [ "C", "uat_1_full","D"]        # ["nIterOver1"]
+    size_set = ["uat_1_full", "C", "D"]        # ["nIterOver1"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))
@@ -70,7 +55,6 @@ def main():
                 sub_data = cal_sub_data(data, supplier, master_data[ResultName.ITEM_SUPPLIER][supplier])
                 sub_model = SubModel(data, sub_data)
                 sub_model.construct()
-
                 sub_result = sub_model.solve(mode=2)
                 result[LBBDResultName.SUB_RESULT][supplier] = sub_result
 

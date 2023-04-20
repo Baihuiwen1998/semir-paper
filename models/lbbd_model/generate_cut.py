@@ -1,11 +1,10 @@
 import copy
 
-import gurobipy as gp
 import logging
 
 import numpy as np
 
-from constant.config import ParaName, LBBDSubDataName, SetName, LBBDCutName
+from config import ParaName, LBBDSubDataName, SetName, LBBDCutName
 from models.lbbd_model.relaxed_sub_model import RelaxedSubModel
 from models.lbbd_model.sub_model import SubModel
 from util.header import ParamsMark
@@ -13,6 +12,19 @@ from util.header import ParamsMark
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
 logger = logging.getLogger(__name__)
+
+
+def cal_sub_data(data, supplier, item_list):
+    sub_data = dict()
+    sub_data[LBBDSubDataName.SUPPLIER] = supplier
+    sub_data[LBBDSubDataName.ITEM_LIST] = item_list
+    sub_data[LBBDSubDataName.ORDER_LIST] = list()
+    for item in item_list:
+        sub_data[LBBDSubDataName.ORDER_LIST].extend(data[SetName.ORDER_BY_ITEM_DICT][item])
+    sub_data[LBBDSubDataName.MACHINE_LIST] = data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+    return sub_data
+
+
 class GenerateCut:
     def __init__(self, data):
         self.data = data
@@ -173,22 +185,22 @@ class GenerateCut:
         return lifted_item_list, mis_size
 
 
-    def add_mis_to_other_suppliers(self, item_list, tested_supplier):
-        """
-        :param item_list:
-        :return:
-        """
-        lbbd_cut_data = dict()
-        for supplier in self.data[SetName.SUPPLIER_LIST]:
-            if supplier != tested_supplier:
-                filtered_item_list = set.intersection(set(item_list), set(self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]))
-                sub_data = self.cal_sub_data(supplier, filtered_item_list)
-                sub_model = SubModel(self.data, sub_data)
-                sub_model.construct()
-                self.sub_models[supplier] = sub_model
-                is_feasible = sub_model.solve(mode=1)
-                if not is_feasible:
-                    lbbd_cut_data[LBBDCutName.INFEASIBLE_ITEM_SET_LIST_BY_SUPPLIER_DICT][supplier].append(filtered_item_list)
-
-        return lbbd_cut_data
+    # def add_mis_to_other_suppliers(self, item_list, tested_supplier):
+    #     """
+    #     :param item_list:
+    #     :return:
+    #     """
+    #     lbbd_cut_data = dict()
+    #     for supplier in self.data[SetName.SUPPLIER_LIST]:
+    #         if supplier != tested_supplier:
+    #             filtered_item_list = set.intersection(set(item_list), set(self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]))
+    #             sub_data = cal_sub_data(supplier, filtered_item_list)
+    #             sub_model = SubModel(self.data, sub_data)
+    #             sub_model.construct()
+    #             self.sub_models[supplier] = sub_model
+    #             is_feasible = sub_model.solve(mode=1)
+    #             if not is_feasible:
+    #                 lbbd_cut_data[LBBDCutName.INFEASIBLE_ITEM_SET_LIST_BY_SUPPLIER_DICT][supplier].append(filtered_item_list)
+    #
+    #     return lbbd_cut_data
 

@@ -7,7 +7,7 @@
 import logging
 import os
 import pandas as pd
-from constant.config import *
+from config import *
 from util.raw_header import FileName
 from util.util import str2date
 

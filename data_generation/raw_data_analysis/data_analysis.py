@@ -1,12 +1,11 @@
 
 import logging
-import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from model_prepare.data_prepare import DataPrepare
 
-from constant.config import *
+from config import *
 from model_prepare.feature_prepare import FeaturePrepare
 from util.header import *
 

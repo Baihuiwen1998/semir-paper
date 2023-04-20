@@ -13,9 +13,7 @@ import os
 import logging
 import random
 import pandas as pd
-from constant.config import *
-from data_generation.raw_data_prepare.load_raw_data import LoadRawData
-from data_generation.raw_data_prepare.transform_to_desensitized_data import TransformData
+from config import *
 from model_prepare.data_prepare import DataPrepare
 from util.header import *
 from util.raw_header import FileName, FabricCategoryMark

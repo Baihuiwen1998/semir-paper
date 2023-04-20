@@ -2,14 +2,16 @@ import logging
 import os
 
 from analysis import ModelAnalysis
+from config import LBBDResultName, ResultName
 from models.full_model.full_model_beta import FullModelBeta
 from models.lbbd_model.lbbd import LogicBasedBenders
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare import FeaturePrepare
 from models.full_model.full_model_alpha import FullModelAlpha
 from models.lbbd_model.master_model import MasterModel
+from models.lbbd_model.sub_model import SubModel
 from util.header import ParamsMark
-
+from models.lbbd_model.generate_cut import cal_sub_data
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
 logger = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ def main():
 
     ori_dir = os.getcwd()
     input_dir = ori_dir+"/data/input/synthetic_data/"
-    file_name = 'D/D_3_uat_1_full_梭织/'
+    file_name = 'B/B_1_uat_1_full_梭织/'
 
     # 数据处理
     dp = DataPrepare(input_dir, file_name)
@@ -41,11 +43,20 @@ def main():
         # 建立LBBD模型并求解
         lbbd = LogicBasedBenders(data)
         is_opt, result = lbbd.solve()
-    elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 2:
+    else:
+        result = dict()
         # 建立Branch—and-cut并求解
         master_model = MasterModel(data)
         master_model.construct()
-        result = master_model.gen_model_result()
+        master_data = master_model.gen_model_result()
+        result[LBBDResultName.MASTER_RESULT] = master_data
+        result[LBBDResultName.SUB_RESULT] = dict()
+        for supplier in master_data[ResultName.ITEM_SUPPLIER]:
+            sub_data = cal_sub_data(data, supplier, master_data[ResultName.ITEM_SUPPLIER][supplier])
+            sub_model = SubModel(data, sub_data)
+            sub_model.construct()
+            sub_result = sub_model.solve(mode=2)
+            result[LBBDResultName.SUB_RESULT][supplier] = sub_result
     # 结果  检查 + 分析
     ma = ModelAnalysis(data, result)
     analysis_result = ma.analysis_result()

@@ -1,7 +1,7 @@
 import logging
 import os
 
-from constant.config import *
+from config import *
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare import FeaturePrepare
 from test_relaxed_sub_model import TestRelaxedSubModel

@@ -2,7 +2,7 @@ import itertools
 import logging
 import gurobipy
 
-from constant.config import *
+from config import *
 from util.header import *
 from util.util import var_name_regularizer
 

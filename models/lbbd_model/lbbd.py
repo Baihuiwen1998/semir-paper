@@ -1,13 +1,10 @@
-import setuptools.archive_util
-import setuptools.command.install
-
 from models.lbbd_model.generate_cut import GenerateCut
 from models.lbbd_model.master_model import MasterModel
-from constant.config import *
+from config import *
 from models.lbbd_model.relaxed_master_model import RelaxedMasterModel
 from models.lbbd_model.relaxed_sub_model import RelaxedSubModel
 from models.lbbd_model.sub_model import SubModel
-
+from models.lbbd_model.generate_cut import cal_sub_data
 import logging
 import time
 from util.header import *
@@ -68,7 +65,7 @@ class LogicBasedBenders:
 
             # 创建子问题进行可行性检验
             for supplier in self.master_data[ResultName.ITEM_SUPPLIER]:
-                sub_data = self.cal_sub_data(supplier, self.master_data[ResultName.ITEM_SUPPLIER][supplier])
+                sub_data = cal_sub_data(self.data, supplier, self.master_data[ResultName.ITEM_SUPPLIER][supplier])
                 sub_model = SubModel(self.data, sub_data)
                 sub_model.construct()
                 self.sub_models[supplier] = sub_model
@@ -100,7 +97,7 @@ class LogicBasedBenders:
                 # 求解子问题得到最多可以生产的款式数
                 self.result[LBBDResultName.SUB_RESULT] = dict()
                 for supplier in self.master_data[ResultName.ITEM_SUPPLIER]:
-                    sub_data = self.cal_sub_data(supplier, self.master_data[ResultName.ITEM_SUPPLIER][supplier])
+                    sub_data = cal_sub_data(self.data, supplier, self.master_data[ResultName.ITEM_SUPPLIER][supplier])
                     sub_model = RelaxedSubModel(self.data, sub_data, 0, 3)
                     sub_model.construct()
                     sub_result = sub_model.solve(mode=2)
@@ -118,15 +115,6 @@ class LogicBasedBenders:
         # 超出时长or MAX_ITERATION 时，获取一个可行解
         return False, self.result
 
-    def cal_sub_data(self, supplier, item_list):
-        sub_data = dict()
-        sub_data[LBBDSubDataName.SUPPLIER] = supplier
-        sub_data[LBBDSubDataName.ITEM_LIST] = item_list
-        sub_data[LBBDSubDataName.ORDER_LIST] = list()
-        for item in item_list:
-            sub_data[LBBDSubDataName.ORDER_LIST].extend(self.data[SetName.ORDER_BY_ITEM_DICT][item])
-        sub_data[LBBDSubDataName.MACHINE_LIST] = self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-        return sub_data
 
     def update_data(self):
         self.sub_models = dict()

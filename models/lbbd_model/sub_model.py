@@ -1,6 +1,6 @@
 import logging
 import gurobipy as gp
-from constant.config import *
+from config import *
 from util.util import var_name_regularizer
 
 logger = logging.getLogger(__name__)

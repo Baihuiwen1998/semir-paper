@@ -1,8 +1,4 @@
-import logging
-
-import setuptools.package_index
-
-from constant.config import *
+from config import *
 from util.header import *
 from util.util import *
 import numpy as np
