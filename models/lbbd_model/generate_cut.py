@@ -151,11 +151,11 @@ class GenerateCut:
                     break
             if all_feasible or (len(item_list) == 1):
                 # 不可行
-                logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!")
-                print('[', end='')
-                for item in item_list:
-                    print(str(item), end=',')
-                print(']')
+                # logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!")
+                # print('[', end='')
+                # for item in item_list:
+                #     print(str(item), end=',')
+                # print(']')
                 # 去掉所有款式都可行，则说明找到了令supplier 产生不可解的最小款组合方案
                 flag = False
         return item_list
@@ -175,12 +175,12 @@ class GenerateCut:
                 sub_model.construct()
                 if_feasible = sub_model.solve(mode=1)
                 if not if_feasible:
-                    logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "Lifted子问题不可行!!!!!!!!!")
-                    print('[', end='')
-                    for item in item_list_copy:
-                        print(str(item), end=',')
-                    print(']', end=',')
-                    print("mis_size="+str(mis_size))
+                    # logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "Lifted子问题不可行!!!!!!!!!")
+                    # print('[', end='')
+                    # for item in item_list_copy:
+                    #     print(str(item), end=',')
+                    # print(']', end=',')
+                    # print("mis_size="+str(mis_size))
 
                     lifted_item_list.append(item)
         return lifted_item_list, mis_size

@@ -155,33 +155,33 @@ class MasterModel:
         # 月生产上限
         # =============
         # supplimentary_2-1 对于订单而言，月产量 <= min(款日上限，实体供应商日上限,产线月上限)
-        # for item in self.data[SetName.ITEM_LIST]:
-        #     item_max_occupy = self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]
-        #     for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]:
-        #         for month in self.data[SetName.ITEM_MONTH_DICT][item]:
-        #             for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
-        #                 if (order, supplier, month) in self.vars[VarName.HAT_Z]:
-        #                     if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
-        #                         # supplimentary_2-1.1
-        #                         self.model.addConstr(
-        #                             self.vars[VarName.HAT_Z][order, supplier, month] <=
-        #                             sum(min(item_max_occupy,
-        #                                     self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier].get(date,
-        #                                                                                                          self.data[
-        #                                                                                                              ParaName.MAX_QUANTITY]))
-        #                                 for date in self.data[SetName.ORDER_TIME_DICT][order] if
-        #                                 self.data[ParaName.MONTH_BY_TIME_DICT][date] == month)
-        #                         )
-        #                     else:
-        #                         # supplimentary_2-1.1
-        #                         self.model.addConstr(
-        #                             self.vars[VarName.HAT_Z][order, supplier, month] <=
-        #                             sum(min(item_max_occupy,
-        #                                     self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier].get(date,
-        #                                                                                                               self.data[ParaName.MAX_QUANTITY]))
-        #                                 for date in self.data[SetName.ORDER_TIME_DICT][order] if
-        #                                 date[:7] == month)
-        #                         )
+        for item in self.data[SetName.ITEM_LIST]:
+            item_max_occupy = self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]
+            for supplier in self.data[SetName.SUPPLIER_BY_ITEM_DICT][item]:
+                for month in self.data[SetName.ITEM_MONTH_DICT][item]:
+                    for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
+                        if (order, supplier, month) in self.vars[VarName.HAT_Z]:
+                            if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
+                                # supplimentary_2-1.1
+                                self.model.addConstr(
+                                    self.vars[VarName.HAT_Z][order, supplier, month] <=
+                                    sum(min(item_max_occupy,
+                                            self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier].get(date,
+                                                                                                                 self.data[
+                                                                                                                     ParaName.MAX_QUANTITY]))
+                                        for date in self.data[SetName.ORDER_TIME_DICT][order] if
+                                        self.data[ParaName.MONTH_BY_TIME_DICT][date] == month)
+                                )
+                            else:
+                                # supplimentary_2-1.1
+                                self.model.addConstr(
+                                    self.vars[VarName.HAT_Z][order, supplier, month] <=
+                                    sum(min(item_max_occupy,
+                                            self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier].get(date,
+                                                                                                                      self.data[ParaName.MAX_QUANTITY]))
+                                        for date in self.data[SetName.ORDER_TIME_DICT][order] if
+                                        date[:7] == month)
+                                )
                             # supplimentary_2-1.2
                             # self.model.addConstr(self.vars[VarName.HAT_Z][order, supplier, month] <= sum(
                             #                      self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
@@ -289,7 +289,7 @@ class MasterModel:
             # supplimentary_2-4 对于具有交叉可用machine的情况而言，集合a内部的产量<= 集合a对应machine月产能
             for supplier in self.data[SetName.SUPPLIER_LIST]:
                 for month in self.data[SetName.TIME_MONTH_LIST]:
-                    for idx in range(len(self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier])):
+                    for idx in range(len(self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT].get(supplier,[]))):
                         machine_subset = self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier][idx]
                         item_subset = self.data[SetName.ITEM_SUB_SETS_BY_SUPPLIER_DICT][supplier][idx]
                         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:

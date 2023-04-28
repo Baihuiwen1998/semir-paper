@@ -24,7 +24,7 @@ def main():
     output_dir = ori_dir+"data/output/B&CH/"
     # size_set = [ "uat_1_full", "da_type_2_online_solve"]
     # size_set = ["A"]        # , "B", "C", "D"]
-    size_set = ["Set_4_leftover"]
+    size_set = ["Set_5"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))

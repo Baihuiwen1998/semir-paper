@@ -23,9 +23,9 @@ def cal_cum_dis(dis):
         cum_dis.append(sum)
     return cum_dis
 
-for i in range(10):
+for i in range(5):
     num_of_item = 200
-    num_of_supplier = 20
+    num_of_supplier = 10
     num_of_machine_types = 10
     num_of_periods = 120
     num_of_periods_per_hat = 30

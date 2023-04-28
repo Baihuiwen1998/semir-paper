@@ -20,7 +20,7 @@ def main():
     ori_dir = "/Users/emmabai/PycharmProjects/semir-paper/"
     input_dir = ori_dir + "data/input/random_data/"
     output_dir = ori_dir+"data/output/MIP/"
-    size_set = ["Set_4"]
+    size_set = ["Set_5"]
     # size_set = ["C", "D"]
     for size_name in size_set:
         out_list = list()
@@ -28,15 +28,14 @@ def main():
         path = input_dir+size_name+"/"
         for file_name in os.listdir(path):
             ol = list()
-            ol.append(size_name+file_name)
+            ol.append(file_name)
 
             # read data from file if needed
             # 数据处理
             dp = DataPrepare(path, file_name+"/")
             data = dp.prepare()
 
-            ol.append(data[DataName.ITEM].shape[0])
-            ol.append(data[DataName.ORDER].shape[0])
+
 
             # 特征处理
             if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
@@ -44,6 +43,8 @@ def main():
             else:
                 fp = FeaturePrepareSemir(data, file_name)
             data = fp.prepare()
+            ol.append(len(data[SetName.ITEM_LIST]))
+            ol.append(len(data[SetName.ORDER_LIST]))
             ol.append(len(data[SetName.SUPPLIER_LIST]))
             ol.append(len(data[SetName.MACHINE_LIST]))
 
