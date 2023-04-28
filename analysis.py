@@ -15,17 +15,17 @@ class ModelAnalysis:
         self.data = data
         self.result = result
 
-    def analysis_result(self):
+    def analysis_result(self, optimal):
         """
         主函数
         """
-
+        self.optimal = optimal
         is_correct = self.correctness_analyse()
         logger.info('结果检查完成')
         return is_correct
 
     def correctness_analyse(self):
-        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0 and self.optimal:
             result = dict()
             item_supplier = dict()
             order_machine_date = dict()

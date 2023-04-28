@@ -7,7 +7,7 @@ formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
 
 
-class FeaturePrepare:
+class FeaturePrepareSemir:
     def __init__(self, data, filename):
         self.data = data
         self.filename = filename

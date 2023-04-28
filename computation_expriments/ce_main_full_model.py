@@ -6,18 +6,21 @@ import pandas as pd
 
 from ce_analysis import ModelAnalysis
 from model_prepare.data_prepare import DataPrepare
-from model_prepare.feature_prepare import FeaturePrepare
+from model_prepare.feature_prepare_random import FeaturePrepareRandom
+from model_prepare.feature_prepare_semir import FeaturePrepareSemir
 from models.full_model.full_model_alpha import FullModelAlpha
 from config import *
+from util.header import ParamsMark
+
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
 logger = logging.getLogger(__name__)
 
 def main():
-    ori_dir = "D:/Codes/Python/semir-paper/"
-    input_dir = ori_dir + "data/input/synthetic_data/"
+    ori_dir = "/Users/emmabai/PycharmProjects/semir-paper/"
+    input_dir = ori_dir + "data/input/random_data/"
     output_dir = ori_dir+"data/output/MIP/"
-    size_set = ["da_type_2_online_solve", "uat_1_full"]
+    size_set = ["Set_4"]
     # size_set = ["C", "D"]
     for size_name in size_set:
         out_list = list()
@@ -36,9 +39,11 @@ def main():
             ol.append(data[DataName.ORDER].shape[0])
 
             # 特征处理
-            fp = FeaturePrepare(data, file_name)
+            if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
+                fp = FeaturePrepareRandom(data, file_name)
+            else:
+                fp = FeaturePrepareSemir(data, file_name)
             data = fp.prepare()
-
             ol.append(len(data[SetName.SUPPLIER_LIST]))
             ol.append(len(data[SetName.MACHINE_LIST]))
 

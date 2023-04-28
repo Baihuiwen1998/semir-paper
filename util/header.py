@@ -15,6 +15,8 @@ class ItemHeader:
     ITEM_CAPACITY_GROUP = 'item_capacity_group'
     ITEM_ID = 'item_id'
     SHARE_LEVEL = 'share_level'
+    MACHINE_TYPE = 'machine_type'
+    MAX_PRODUCTION_LIMIT = 'max_production_limit'
 
 class SupplierHeader:
     SUPPLIER_ID = 'supplier_id'
@@ -34,10 +36,12 @@ class MachineHeader:
     MONTH = 'month'
     PLANNED_CAPACITY = 'planned_capacity'
     AVAILABLE_CAPACITY = 'available_capacity'
+    MACHINE_TYPE = 'machine_type'
 
 class CalendarHeader:
     DATE = 'work_date'
     IS_WORKDAY = 'valid'
+    MONTH = 'month'
 
 
 class SupplierPoolMark:
@@ -75,6 +79,7 @@ class ParamsMark:
     SOLUTION_MODE = 'solution_mode'
     CUT_MODE = 'cut_mode'
     IS_LIFT = 'is_lift'
+    IS_RANDOM_DATA = 'is_random_data'
     ALL_PARAMS_DICT = {MAX_ITERATION: 500,
                        MAX_RUNTIME: 3600,
                        SHARE_LEVEL: 0,
@@ -84,9 +89,10 @@ class ParamsMark:
                        MIP_GAP: 0.001,
                        ITEM_MULTI_SUPPLIER: False,
                        MILP_MODEL: 0,    # {0:alpha, 1:beta}
-                       SOLUTION_MODE: 0,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
+                       SOLUTION_MODE: 1,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
                        CUT_MODE: 0,      # {0: greedy, 1: dbfs}
-                       IS_LIFT: False
+                       IS_LIFT: False,
+                       IS_RANDOM_DATA: True
                        }
 
 

@@ -82,7 +82,7 @@ class SetName:
     LABEL_LIST = 'label_list'
     MACHINE_BY_LABEL_DICT = 'machine_by_label_dict'
     ITEM_BY_LABEL_DICT = 'item_by_label_dict'
-
+    ELIGIBLE_MACHINE_TYPE_SET_BY_ITEM_DICT = 'item_eligible_machine_type_set'
 
     MACHINE_SUB_SETS_BY_SUPPLIER_DICT = 'machine_sub_sets_by_supplier_dict'
     ITEM_SUB_SETS_BY_SUPPLIER_DICT = 'item_sub_sets_by_supplier_dict'
@@ -102,10 +102,11 @@ class ParaName:
     MACHINE_MONTH_MAX_PRODUCTION_DICT = 'supplier_month_max_production_dict'  # 给定算法供应商的每月产能上限(O_sT) e.g. {(supplier_1, time_str_1): integer1, ...}
     MACHINE_CAPACITY_PLANNED_DICT = 'machine_capacity_planned_dict'  # 给定产线的每月产能规划产能() e.g. {(machine_1, time_str_1): integer1, ...}
     MACHINE_SUPPLIER_DICT = 'machine_supplier_dict'  # 给定机器对应的供应商字典 e.g. {machine1: supplier_1,...}
-
+    MACHINE_TYPE_DICT = 'machine_type_dict'
     # 供应商相关参数
     SUPPLIER_CAPACITY_TARGET_DICT = 'supplier_capacity_target_dict'  # 给定实体供应商和时间(月份)的产能规划达成目标字典(Omega_sT) e.g. [(supplier1, month_str_1): float1, ...]
     SUPPLIER_DAILY_MAX_PRODUCTION_DICT = 'supplier_daily_max_production_dict'  # 给定实体供应商的每日产能上限(O_st) e.g. {(supplier_1, fabric_category1, time_str_1): integer1, ...}
+    MONTH_BY_TIME_DICT = 'month_by_time_dict'
 
 
 class ObjCoeffName:

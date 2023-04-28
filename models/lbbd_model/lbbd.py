@@ -1,3 +1,4 @@
+from models.full_model.relaxed_full_model_alpha import RelaxedFullModelAlpha
 from models.lbbd_model.generate_cut import GenerateCut
 from models.lbbd_model.master_model import MasterModel
 from config import *
@@ -102,15 +103,22 @@ class LogicBasedBenders:
                     sub_model.construct()
                     sub_result = sub_model.solve(mode=2)
                     self.result[LBBDResultName.SUB_RESULT][supplier] = sub_result
-                # 建立松弛的主问题求解
-                relaxed_master_model = RelaxedMasterModel(self.data)
-                relaxed_master_model.construct()
-                relaxed_master_model.add_fixed_assignments(self.result[LBBDResultName.SUB_RESULT])
-                self.result[LBBDResultName.MASTER_RESULT] = relaxed_master_model.solve(self.lbbd_cut_data)
-                self.result[LBBDResultName.RUN_TIME] = end_time - start_time
-                self.result[LBBDResultName.OBJ_VALUE] = relaxed_master_model.model.objVal
-                self.result[LBBDResultName.LOWER_BOUND] = self.master_model.model.objVal
-                self.result[LBBDResultName.ITERATION] = iteration
+                # 建立松弛的完整主问题求解
+                self.master_model.add_fixed_assignments(self.result[LBBDResultName.SUB_RESULT])
+                self.master_model.construct_as_full_model()
+                self.result = self.master_model.gen_model_result_as_full_model()
+
+                # self.result[LBBDResultName.MASTER_RESULT] = relaxed_master_model.solve(self.lbbd_cut_data)
+                # self.result[LBBDResultName.RUN_TIME] = end_time - start_time
+                # self.result[LBBDResultName.OBJ_VALUE] = relaxed_master_model.model.objVal
+                # self.result[LBBDResultName.LOWER_BOUND] = self.master_model.model.objVal
+                # self.result[LBBDResultName.ITERATION] = iteration
+
+                # 建立完整模型求解
+                # relaxed_model = RelaxedFullModelAlpha(self.data)
+                # relaxed_model.construct_model()
+                # relaxed_model.add_fixed_assignments(self.result[LBBDResultName.SUB_RESULT])
+                # self.result = relaxed_model.gen_model_result()
                 break
         # 超出时长or MAX_ITERATION 时，获取一个可行解
         return False, self.result

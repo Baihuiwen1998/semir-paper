@@ -3,7 +3,8 @@ import os
 
 from config import *
 from model_prepare.data_prepare import DataPrepare
-from model_prepare.feature_prepare import FeaturePrepare
+from model_prepare.feature_prepare_random import FeaturePrepareRandom
+from model_prepare.feature_prepare_semir import FeaturePrepareSemir
 from test_relaxed_sub_model import TestRelaxedSubModel
 from test_master_model import TestMasterModel
 
@@ -24,14 +25,14 @@ def cal_sub_data(data, supplier, item_list):
 
 
 def main():
-    ori_dir = "D:/Codes/Python/semir-paper/"
-    input_dir = ori_dir+"data/input/desensitized_data/"
+    ori_dir = "/Users/emmabai/PycharmProjects/semir-paper/"
+    input_dir = ori_dir+"data/input/random_data/"
     output_dir = ori_dir+"data/output/"
-    file = 'uat_1_full/' + 'at_针织/'
+    file = 'Set_4/' + '3/'
 
     input_file_dir = os.path.join(input_dir, file)
-    output_file_dir = os.path.join(output_dir, file)
-    for basic_file in [input_file_dir, output_file_dir]:
+
+    for basic_file in [input_file_dir]:
         os.makedirs(basic_file, exist_ok=True)
 
     # read data from file if needed
@@ -41,10 +42,10 @@ def main():
     data = dp.prepare()
 
     # 特征处理
-    fp = FeaturePrepare(data, file)
+    fp = FeaturePrepareRandom(data, file)
     data = fp.prepare()
-    supplier = 3001192
-    item_list = ['C44725894', 'C44729124', 'C44741027', 'C44983441', 'C45460451', 'C45726082', 'C45966874', 'C45969314', 'C45975657', 'C47031809', 'C47031817', 'C47220376', 'C47227773', 'C47610837', 'C49207597', 'C50160231']
+    supplier = 9
+    item_list = [13, 9, 5]
     sub_data = cal_sub_data(data, supplier, item_list)
     sub_model = TestRelaxedSubModel(data, sub_data)
     sub_model.construct()
@@ -52,7 +53,7 @@ def main():
 
     time_set = set()
     for item in item_list:
-        print("--------------------item:" + item +":" + str(data[ParaName.ITEM_QUANTITY_DICT][item]) + "---------------------------")
+        print("--------------------item:" + str(item) +":" + str(data[ParaName.ITEM_QUANTITY_DICT][item]) + "---------------------------")
 
         if data[ParaName.ITEM_MAX_OCCUPY_DICT][item] < 0:
             item_max_occupy = float('inf')
@@ -71,10 +72,10 @@ def main():
         for machine in set.intersection(set(data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]), set(data[SetName.MACHINE_BY_ITEM_DICT][item])):
             print("--------------------machine:" + str(machine) +"---------------------------")
             for month in data[SetName.ITEM_MONTH_DICT][item]:
-                print(month +":" + str(data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0)))
+                print(str(month) + ":" + str(data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0)))
     print("--------------------supplier_daily_max_production---------------------------")
     for date in sorted(time_set):
-        print("supplier_daily_max:" + date + ":" + str(
+        print("supplier_daily_max:" + str(date) + ":" + str(
             data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier].get(date, float('inf'))))
     print('end')
 

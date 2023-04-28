@@ -3,10 +3,11 @@ import os
 
 from analysis import ModelAnalysis
 from config import LBBDResultName, ResultName
+from model_prepare.feature_prepare_random import FeaturePrepareRandom
 from models.full_model.full_model_beta import FullModelBeta
 from models.lbbd_model.lbbd import LogicBasedBenders
 from model_prepare.data_prepare import DataPrepare
-from model_prepare.feature_prepare import FeaturePrepare
+from model_prepare.feature_prepare_semir import FeaturePrepareSemir
 from models.full_model.full_model_alpha import FullModelAlpha
 from models.lbbd_model.master_model import MasterModel
 from models.lbbd_model.sub_model import SubModel
@@ -19,17 +20,20 @@ logger = logging.getLogger(__name__)
 def main():
 
     ori_dir = os.getcwd()
-    input_dir = ori_dir+"/data/input/synthetic_data/"
-    file_name = 'B/B_1_uat_1_full_梭织/'
+    input_dir = ori_dir+"/data/input/random_data/"
+    file_name = 'Set_4/3/'
 
     # 数据处理
     dp = DataPrepare(input_dir, file_name)
     data = dp.prepare()
 
     # 特征处理
-    fp = FeaturePrepare(data, file_name)
+    if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
+        fp = FeaturePrepareRandom(data, file_name)
+    else:
+        fp = FeaturePrepareSemir(data, file_name)
     data = fp.prepare()
-
+    is_opt = True
     result = None
     if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 0:
         # 建立整体模型并求解
@@ -59,7 +63,7 @@ def main():
             result[LBBDResultName.SUB_RESULT][supplier] = sub_result
     # 结果  检查 + 分析
     ma = ModelAnalysis(data, result)
-    analysis_result = ma.analysis_result()
+    analysis_result = ma.analysis_result(is_opt)
 
     print('end')
 

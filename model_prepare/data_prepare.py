@@ -8,6 +8,7 @@ import logging
 import os
 import pandas as pd
 from config import *
+from util.header import ParamsMark
 from util.raw_header import FileName
 from util.util import str2date
 
@@ -49,8 +50,9 @@ class DataPrepare:
 
         # 订单表
         order_df = pd.read_csv(os.path.join(self.input_dir + self.file, FileName.ORDER_FILE_NAME + '.csv'))
-        order_df['arrival_date'] = order_df['arrival_date'].apply(lambda x: str2date(x))
-        order_df['due_date'] = order_df['due_date'].apply(lambda x: str2date(x))
+        if not ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
+            order_df['arrival_date'] = order_df['arrival_date'].apply(lambda x: str2date(x))
+            order_df['due_date'] = order_df['due_date'].apply(lambda x: str2date(x))
 
         # 供应商表
         supplier_df = pd.read_csv(os.path.join(self.input_dir + self.file, FileName.SUPPLIER_FILE_NAME + '.csv'))
@@ -60,7 +62,8 @@ class DataPrepare:
 
         # 时间表
         calendar_df = pd.read_csv(os.path.join(self.input_dir + self.file, FileName.CALENDAR_FILE_NAME + '.csv'))
-        calendar_df['work_date'] = calendar_df['work_date'].apply(lambda x: str2date(x))
+        if not ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
+            calendar_df['work_date'] = calendar_df['work_date'].apply(lambda x: str2date(x))
         self.data = {DataName.ITEM: item_df,
                      DataName.ORDER: order_df,
                      DataName.SUPPLIER: supplier_df,

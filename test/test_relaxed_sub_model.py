@@ -224,7 +224,7 @@ class TestRelaxedSubModel:
                 for (item, date), var in self.vars['item_date_max'].items():
                     value = var.x
                     if value > 0.001:
-                        print(str(item)+","+date+", 超出日上限:"+str(value))
+                        print(str(item)+","+str(date)+", 超出日上限:"+str(value))
                         item_date_max[item, date] = value
 
                 supplier_date_max = dict()

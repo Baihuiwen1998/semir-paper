@@ -6,7 +6,7 @@ import numpy as np
 from model_prepare.data_prepare import DataPrepare
 
 from config import *
-from model_prepare.feature_prepare import FeaturePrepare
+from model_prepare.feature_prepare_semir import FeaturePrepareSemir
 from util.header import *
 
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 en_name_of_fabric = {
             '梭织': 'Woven',
             '毛织': 'Woolen',
-            'at_针织': 'Knit',
+            '针织': 'Knit',
             '牛仔': 'Denim'
         }
 
@@ -149,78 +149,123 @@ class DataAnalysis:
         # plt.show()
 
 
-        item_quantity_list = list()
-        order_quantity_list = list()
-        order_production_time_length_list = list()
+        # item_quantity_list = list()
+        # order_quantity_list = list()
+        # order_production_time_length_list = list()
+        #
+        # for item in self.data[SetName.ITEM_LIST]:
+        #     item_quantity_list.append((item, self.data[ParaName.ITEM_QUANTITY_DICT][item]))
+        # for order in self.data[SetName.ORDER_LIST]:
+        #     order_quantity_list.append((order, self.data[ParaName.ORDER_QUANTITY_DICT][order]))
+        #     order_production_time_length_list.append((order, len(self.data[SetName.ORDER_TIME_DICT][order])))
+        #
+        # item_quantity_df = pd.DataFrame(item_quantity_list, columns=['item_id', 'item_quantity'])
+        # order_quantity_df = pd.DataFrame(order_quantity_list, columns=['item_id', 'order_quantity'])
+        # order_production_time_length_df = pd.DataFrame(order_production_time_length_list, columns=['order_id', 'order_production_time_length'])
+        #
+        # item_quantity = item_quantity_df['item_quantity'].value_counts()
+        # order_quantity = order_quantity_df['order_quantity'].value_counts()
+        # order_production_time_length = order_production_time_length_df['order_production_time_length'].value_counts()
+        #
+        # colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(item_quantity.index)))
+        # plt.hist(item_quantity.values)
+        # plt.title("Item quantity, fabric:" + en_name_of_fabric[self.fabric],
+        #           fontsize=16)
+        # plt.savefig(out_dir+suanli_name+"_"+fabric+"_item_quantity.png", dpi = 500, bbox_inches = 'tight')
+        #
+        # plt.show()
+        #
+        # colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(order_quantity.index)))
+        # plt.hist(order_quantity.values)
+        # plt.title("Order quantity, fabric:" + en_name_of_fabric[self.fabric],
+        #           fontsize=16)
+        # plt.savefig(out_dir+suanli_name + "_" + fabric + "_order_quantity.png", dpi=500, bbox_inches='tight')
+        #
+        # plt.show()
+        #
+        # colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(order_production_time_length.index)))
+        # plt.pie(order_production_time_length.values, labels=order_production_time_length.index, autopct='%3.1f%%', colors=colors)
+        # plt.title("Order production time length, fabric:" + en_name_of_fabric[self.fabric],
+        #           fontsize=16)
+        # plt.savefig(out_dir+suanli_name + "_" + fabric + "_order_production_time_length.png", dpi=500, bbox_inches='tight')
+        #
+        # plt.show()
+        #
+        # order_df = self.data[DataName.ORDER]
+        # order_df = order_df[[OrderHeader.ORDER_ID, OrderHeader.ARRIVAL_DATE]]
+        # order_arrival_date = order_df[OrderHeader.ARRIVAL_DATE].value_counts()
+        # colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(order_arrival_date.index)))
+        # plt.pie(order_arrival_date.values, labels=order_arrival_date.index, autopct='%3.1f%%', colors=colors)
+        # plt.title("Order arrival date, fabric:" + en_name_of_fabric[self.fabric],
+        #           fontsize=16)
+        # plt.savefig(out_dir+suanli_name + "_" + fabric + "_order_arrival_date.png", dpi=500, bbox_inches='tight')
+        #
+        # plt.show()
+        #
+        # order_df = self.data[DataName.ORDER]
+        # order_df = order_df[[OrderHeader.ORDER_ID, OrderHeader.DUE_DATE]]
+        # order_due_date = order_df[OrderHeader.DUE_DATE].value_counts()
+        # colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(order_due_date.index)))
+        # plt.pie(order_due_date.values, labels=order_due_date.index, autopct='%3.1f%%', colors=colors)
+        # plt.title("Order due date, fabric:" + en_name_of_fabric[self.fabric],
+        #           fontsize=16)
+        # plt.savefig(out_dir+suanli_name + "_" + fabric + "_order_due_date.png", dpi=500, bbox_inches='tight')
+        #
+        # plt.show()
 
+        item_daily_max_list = list()
         for item in self.data[SetName.ITEM_LIST]:
-            item_quantity_list.append((item, self.data[ParaName.ITEM_QUANTITY_DICT][item]))
-        for order in self.data[SetName.ORDER_LIST]:
-            order_quantity_list.append((order, self.data[ParaName.ORDER_QUANTITY_DICT][order]))
-            order_production_time_length_list.append((order, len(self.data[SetName.ORDER_TIME_DICT][order])))
+            item_daily_max_list.append((item, self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]))
 
-        item_quantity_df = pd.DataFrame(item_quantity_list, columns=['item_id', 'item_quantity'])
-        order_quantity_df = pd.DataFrame(order_quantity_list, columns=['item_id', 'order_quantity'])
-        order_production_time_length_df = pd.DataFrame(order_production_time_length_list, columns=['order_id', 'order_production_time_length'])
+        supplier_daily_max_list = list()
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
+            for date in self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier]:
+                supplier_daily_max_list.append((supplier, date, self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier][date]))
 
-        item_quantity = item_quantity_df['item_quantity'].value_counts()
-        order_quantity = order_quantity_df['order_quantity'].value_counts()
-        order_production_time_length = order_production_time_length_df['order_production_time_length'].value_counts()
+        machine_monthly_max_list = list()
+        for (machine, month) in self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT]:
+            machine_monthly_max_list.append((machine, month, self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT][machine, month]))
 
-        colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(item_quantity.index)))
-        plt.hist(item_quantity.values)
-        plt.title("Item quantity, fabric:" + en_name_of_fabric[self.fabric],
+
+
+        item_daily_max_df = pd.DataFrame(item_daily_max_list, columns=['item_id', 'item_daily_max'])
+        supplier_daily_max_df = pd.DataFrame(supplier_daily_max_list, columns = ['supplier', 'date', 'supplier_daily_max'])
+        machine_monthly_max_df = pd.DataFrame(machine_monthly_max_list, columns = ['machine', 'month', 'machine_monthly_max'])
+
+        item_daily_max = item_daily_max_df['item_daily_max'].value_counts()
+        colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(item_daily_max.index)))
+        plt.pie(item_daily_max.values, labels=item_daily_max.index, autopct='%3.1f%%', colors=colors)
+        plt.title("Item daily max, fabric:" + en_name_of_fabric[self.fabric],
                   fontsize=16)
-        plt.savefig(out_dir+suanli_name+"_"+fabric+"_item_quantity.png", dpi = 500, bbox_inches = 'tight')
+        plt.savefig(out_dir+suanli_name + "_" + fabric + "_item_daily_max.png", dpi=500, bbox_inches='tight')
 
         plt.show()
 
-        colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(order_quantity.index)))
-        plt.hist(order_quantity.values)
-        plt.title("Order quantity, fabric:" + en_name_of_fabric[self.fabric],
+        supplier_daily_max = supplier_daily_max_df['supplier_daily_max'].value_counts()
+        colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(supplier_daily_max.index)))
+        plt.pie(supplier_daily_max.values, labels=supplier_daily_max.index, autopct='%3.1f%%', colors=colors)
+        plt.title("Supplier daily max, fabric:" + en_name_of_fabric[self.fabric],
                   fontsize=16)
-        plt.savefig(out_dir+suanli_name + "_" + fabric + "_order_quantity.png", dpi=500, bbox_inches='tight')
+        plt.savefig(out_dir + suanli_name + "_" + fabric + "_supplier_daily_max.png", dpi=500, bbox_inches='tight')
 
         plt.show()
 
-        colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(order_production_time_length.index)))
-        plt.pie(order_production_time_length.values, labels=order_production_time_length.index, autopct='%3.1f%%', colors=colors)
-        plt.title("Order production time length, fabric:" + en_name_of_fabric[self.fabric],
+        machine_monthly_max_df = machine_monthly_max_df[machine_monthly_max_df['machine_monthly_max'] > 0]
+        machine_monthly_max = machine_monthly_max_df['machine_monthly_max'].value_counts()
+        colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(machine_monthly_max.index)))
+        plt.pie(machine_monthly_max.values, labels=machine_monthly_max.index, autopct='%3.1f%%', colors=colors)
+        plt.title("Machine monthly max, fabric:" + en_name_of_fabric[self.fabric],
                   fontsize=16)
-        plt.savefig(out_dir+suanli_name + "_" + fabric + "_order_production_time_length.png", dpi=500, bbox_inches='tight')
+        plt.savefig(out_dir + suanli_name + "_" + fabric + "_machine_monthly_max.png", dpi=500, bbox_inches='tight')
 
         plt.show()
-
-        order_df = self.data[DataName.ORDER]
-        order_df = order_df[[OrderHeader.ORDER_ID, OrderHeader.ARRIVAL_DATE]]
-        order_arrival_date = order_df[OrderHeader.ARRIVAL_DATE].value_counts()
-        colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(order_arrival_date.index)))
-        plt.pie(order_arrival_date.values, labels=order_arrival_date.index, autopct='%3.1f%%', colors=colors)
-        plt.title("Order arrival date, fabric:" + en_name_of_fabric[self.fabric],
-                  fontsize=16)
-        plt.savefig(out_dir+suanli_name + "_" + fabric + "_order_arrival_date.png", dpi=500, bbox_inches='tight')
-
-        plt.show()
-
-        order_df = self.data[DataName.ORDER]
-        order_df = order_df[[OrderHeader.ORDER_ID, OrderHeader.DUE_DATE]]
-        order_due_date = order_df[OrderHeader.DUE_DATE].value_counts()
-        colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(order_due_date.index)))
-        plt.pie(order_due_date.values, labels=order_due_date.index, autopct='%3.1f%%', colors=colors)
-        plt.title("Order due date, fabric:" + en_name_of_fabric[self.fabric],
-                  fontsize=16)
-        plt.savefig(out_dir+suanli_name + "_" + fabric + "_order_due_date.png", dpi=500, bbox_inches='tight')
-
-        plt.show()
-
-
 
 def main():
     overall_sheet = list()
     for suanli_name in ['da_type_2_online_solve', 'uat_1_full']:
         for fabric in en_name_of_fabric:
             new_list = list()
-            ori_dir = "D:/Codes/Python/semir-paper/"
+            ori_dir = "/Users/emmabai/PycharmProjects/semir-paper/"
             input_dir = ori_dir+"data/input/desensitized_data/"
             output_dir = ori_dir+"data_generation/raw_data_analysis/out/figures/"
             file = suanli_name+'/' + fabric+'/'
@@ -232,7 +277,7 @@ def main():
             data = dp.prepare()
 
             # 特征处理
-            fp = FeaturePrepare(data, file)
+            fp = FeaturePrepareSemir(data, file)
             data = fp.prepare()
 
             ma = DataAnalysis(data, fabric)

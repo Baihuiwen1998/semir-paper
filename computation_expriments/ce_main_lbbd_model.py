@@ -4,22 +4,24 @@ import os
 import pandas as pd
 
 from ce_analysis import ModelAnalysis
+from model_prepare.feature_prepare_random import FeaturePrepareRandom
 from models.lbbd_model.lbbd import LogicBasedBenders
 from model_prepare.data_prepare import DataPrepare
-from model_prepare.feature_prepare import FeaturePrepare
+from model_prepare.feature_prepare_semir import FeaturePrepareSemir
 from config import *
+from util.header import ParamsMark
 
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
 logger = logging.getLogger(__name__)
 
 def main():
-    ori_dir = "D:/Codes/Python/semir-paper/"
-    input_dir = ori_dir + "data/input/synthetic_data/"
+    ori_dir = "/Users/emmabai/PycharmProjects/semir-paper/"
+    input_dir = ori_dir + "data/input/random_data/"
     output_dir = ori_dir+"data/output/LBBD/"
     # size_set = [ "uat_1_full", "da_type_2_online_solve"]
     # size_set = ["A"]        # , "B", "C", "D"]
-    size_set = ["supplimentary"]        # ["nIterOver1"]
+    size_set = ["Set_3","Set_4"]        # ["nIterOver1"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))
@@ -35,7 +37,10 @@ def main():
             data = dp.prepare()
 
             # 特征处理
-            fp = FeaturePrepare(data, file_name)
+            if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
+                fp = FeaturePrepareRandom(data, file_name)
+            else:
+                fp = FeaturePrepareSemir(data, file_name)
             data = fp.prepare()
 
             ol.append(len(data[SetName.ITEM_LIST]))
@@ -48,7 +53,7 @@ def main():
             is_opt, result = lbbd.solve()
             # 结果  检查 + 分析
             ma = ModelAnalysis(data, result)
-            is_correct, finished_rate_list = ma.analysis_result()
+            is_correct, finished_rate_list = ma.analysis_result(is_opt)
             if is_correct:
                 ol.append(result[LBBDResultName.OBJ_VALUE])
                 ol.append(result[LBBDResultName.RUN_TIME])
