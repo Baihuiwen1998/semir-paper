@@ -20,7 +20,7 @@ def main():
     ori_dir = "/Users/emmabai/PycharmProjects/semir-paper/"
     input_dir = ori_dir + "data/input/random_data/"
     output_dir = ori_dir+"data/output/MIP/"
-    size_set = ["Set_5"]
+    size_set = ["Set_6"]
     # size_set = ["C", "D"]
     for size_name in size_set:
         out_list = list()

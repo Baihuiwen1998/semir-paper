@@ -43,7 +43,7 @@ for i in range(5):
     cum_distribution_of_machine_types_per_item = cal_cum_dis(distribution_of_machine_types_per_item)
     cum_distribution_of_order_time_range = cal_cum_dis(distribution_of_order_time_range)
 
-    distribution_of_supplier_daily_max = [0.15, 0.08, 0.161, 0.05, 0.024, 0.03, 0.056, 0.065, 0.058, 0.03, 0.048, 0.038, 0.035, 0.022, 0.015, 0.008, 0.03, 0.015, 0.015, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01] # 2 为开始，跨度为1
+    distribution_of_supplier_daily_max = [0.05, 0.08, 0.161, 0.1, 0.074, 0.03, 0.056, 0.065, 0.058, 0.03, 0.048, 0.038, 0.035, 0.022, 0.015, 0.008, 0.03, 0.015, 0.015, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01] # 2 为开始，跨度为1
     distribution_of_machine_monthly_max = [0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1] # 10为起点，30为跨度
     distribution_of_item_daily_max = [0.5, 0.3, 0.12, 0.08] # 1为起点， 跨度为1
     cum_distribution_of_supplier_daily_max = cal_cum_dis(distribution_of_supplier_daily_max)
@@ -128,12 +128,13 @@ for i in range(5):
         elif importance == 4:
             importance = '观察'
         for date in range(num_of_periods):
-            # 生成supplier的在date的产能
-            rnd = random.random()
-            idx = 0
-            while rnd > cum_distribution_of_supplier_daily_max[idx]:
-                idx = idx + 1
-            supplier_daily_max = idx+1
+            if date % num_of_periods_per_hat==0:
+                # 生成supplier的在date的产能
+                rnd = random.random()
+                idx = 0
+                while rnd > cum_distribution_of_supplier_daily_max[idx]:
+                    idx = idx + 1
+                supplier_daily_max = idx+1
             supplier_list.append((supplier_idx, date, supplier_daily_max, importance))
         # 生成supplier的machine
         rnd = random.random()

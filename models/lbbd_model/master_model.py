@@ -28,6 +28,12 @@ def my_call_back(model, where):
             sub_model.construct()
             is_feasible = sub_model.solve(mode=1)
             if not is_feasible:
+                # 不可行
+                logger.info("!!!!!!!!!" + "供应商：" + str(supplier)+"origin item list")
+                print('[', end='')
+                for item in sub_data[LBBDSubDataName.ITEM_LIST]:
+                    print(str(item), end=',')
+                print(']')
                 # 调用寻找benders cut函数
                 for direction in [False, True]:
                     item_list, mis_size = GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.CUT_GENERATOR].generate_mis(sub_model, direction)
