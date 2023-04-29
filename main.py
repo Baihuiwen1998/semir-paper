@@ -21,7 +21,7 @@ def main():
 
     ori_dir = os.getcwd()
     input_dir = ori_dir+"/data/input/random_data/"
-    file_name = 'Set_5/0/'
+    file_name = 'Set_4/3/'
 
     # 数据处理
     dp = DataPrepare(input_dir, file_name)

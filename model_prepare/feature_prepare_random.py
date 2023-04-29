@@ -484,15 +484,15 @@ class FeaturePrepareRandom:
         # 基础固定系数
         # =================
 
-        self.data[ObjCoeffName.ORDER_DELAY_BASE_PUNISH] = 200
+        self.data[ObjCoeffName.ORDER_DELAY_BASE_PUNISH] = 20
 
-        self.data[ObjCoeffName.ORDER_DELAY_PUNISH] = 10
+        self.data[ObjCoeffName.ORDER_DELAY_PUNISH] = 1
 
         # self.data[ObjCoeffName.ORDER_PRODUCT_OPT_PUNISH] = 10
 
-        self.data[ObjCoeffName.CAPACITY_AVERAGE_PUNISH] = 100
+        self.data[ObjCoeffName.CAPACITY_AVERAGE_PUNISH] = 10
 
-        self.data[ObjCoeffName.SUPPLIER_LADDER_PUNISH] = 100
+        self.data[ObjCoeffName.SUPPLIER_LADDER_PUNISH] = 10
 
 
     def print_model_info(self):

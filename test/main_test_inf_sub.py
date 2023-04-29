@@ -6,7 +6,7 @@ from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare_random import FeaturePrepareRandom
 from model_prepare.feature_prepare_semir import FeaturePrepareSemir
 from test_relaxed_sub_model import TestRelaxedSubModel
-from test_master_model import TestMasterModel
+# from test_master_model import TestMasterModel
 
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=formatter)
@@ -45,7 +45,7 @@ def main():
     fp = FeaturePrepareRandom(data, file)
     data = fp.prepare()
     supplier = 9
-    item_list = [13, 9, 5]
+    item_list = [28, 38]
     sub_data = cal_sub_data(data, supplier, item_list)
     sub_model = TestRelaxedSubModel(data, sub_data)
     sub_model.construct()
@@ -86,9 +86,9 @@ def main():
     #     if 6 in data[DAOptSetName.MACHINE_BY_CHANNEL_DICT][channel]:
     #         print(channel)
 
-    master_model = TestMasterModel(data, supplier, item_list)
-    master_model.construct()
-    master_model.solve()
+    # master_model = TestMasterModel(data, supplier, item_list)
+    # master_model.construct()
+    # master_model.solve()
 
 if __name__ == '__main__':
     main()

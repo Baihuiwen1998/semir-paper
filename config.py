@@ -129,6 +129,7 @@ class VarName:
     BETA = 'beta'
     GAMMA = 'gamma'     # 0-1变量，gamma_{o,m}表示订单在机器m上生产
     SUPPLIER_CAPACITY_RATIO = 'supplier_capacity_ratio'
+    CAPACITY_RATIO_AVG = 'capacity_ratio_avg'
     POOL_CAPACITY_RATIO_AVG = 'pool_capacity_ratio_avg'
     POOLS_CAPACITY_RATIO_DELTA = 'pool_capacity_ratio_delta'
     SUPPLIER_CAPACITY_RATIO_DELTA = 'supplier_capacity_ratio_delta'

@@ -78,6 +78,10 @@ class FullModelAlpha:
                 vtype=gurobipy.GRB.CONTINUOUS, lb=0)
                 for supplier in self.data[SetName.SUPPLIER_LIST]
             }
+            if not ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_POOL]:
+                self.vars[VarName.CAPACITY_RATIO_AVG] = self.model.addVar(
+                    name=var_name_regularizer(f'V_{VarName.CAPACITY_RATIO_AVG}'),
+                    vtype=gurobipy.GRB.CONTINUOUS, lb=0)
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_LADDEL_OBJ]:
             # 池内平均产能规划达成率
@@ -186,20 +190,52 @@ class FullModelAlpha:
                         for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, [])]),
                     name=f"planned_capacity_occupied_ratio_of_{supplier}"
                 )
+            if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_POOL]:
+                for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
+                    for supplier in self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]:
+                        self.model.addConstr(
+                            self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier] >=
+                            self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier] - self.vars[VarName.POOL_CAPACITY_RATIO_AVG][pool],
+                            name=f"supplier_capacity_ratio_delta_of_{supplier}_in_pool_{pool}_1"
+                        )
+                        self.model.addConstr(
+                            self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier] >=
+                            self.vars[VarName.POOL_CAPACITY_RATIO_AVG][pool]
+                            -self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier],
+                            name=f"supplier_capacity_ratio_delta_of_{supplier}_in_pool_{pool}_2"
+                        )
+            else:
+                for supplier in self.data[SetName.SUPPLIER_LIST]:
+                    self.model.addConstr(
+                        self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier] >=
+                        self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier] -
+                        self.vars[VarName.CAPACITY_RATIO_AVG],
+                        name=f"supplier_capacity_ratio_delta_of_{supplier}"
+                    )
+                    self.model.addConstr(
+                        self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier] >=
+                        self.vars[VarName.CAPACITY_RATIO_AVG]
+                        - self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier],
+                        name=f"supplier_capacity_ratio_delta_of_{supplier}_2"
+                    )
 
-            for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
-                for supplier in self.data[SetName.SUPPLIER_BY_POOL_DICT][pool]:
-                    self.model.addConstr(
-                        self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier] >=
-                        self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier] - self.vars[VarName.POOL_CAPACITY_RATIO_AVG][pool],
-                        name=f"supplier_capacity_ratio_delta_of_{supplier}_in_pool_{pool}_1"
-                    )
-                    self.model.addConstr(
-                        self.vars[VarName.SUPPLIER_CAPACITY_RATIO_DELTA][supplier] >=
-                        self.vars[VarName.POOL_CAPACITY_RATIO_AVG][pool]
-                        -self.vars[VarName.SUPPLIER_CAPACITY_RATIO][supplier],
-                        name=f"supplier_capacity_ratio_delta_of_{supplier}_in_pool_{pool}_2"
-                    )
+                self.model.addConstr(
+                    gurobipy.quicksum(
+                        self.vars[VarName.ALPHA][item, supplier] *
+                        self.data[ParaName.ITEM_QUANTITY_DICT][
+                            item]
+                        for supplier in self.data[SetName.SUPPLIER_LIST]
+                        for item in self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
+                        if (item, supplier) in self.vars[VarName.ALPHA]
+                    ) / sum([
+                        self.data[ParaName.MACHINE_CAPACITY_PLANNED_DICT].get((machine, month), 0)
+                        for supplier in self.data[SetName.SUPPLIER_LIST]
+                        for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT].get(supplier, [])
+                        for month in self.data[SetName.MACHINE_TIME_MONTH_DICT].get(machine, [])]) ==
+                    self.vars[VarName.CAPACITY_RATIO_AVG],
+                    name=f"capacity_ratio_avg"
+                )
+
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CAPACITY_LADDEL_OBJ]:
             for pool in self.data[SetName.SUPPLIER_BY_POOL_DICT]:
@@ -348,16 +384,18 @@ class FullModelAlpha:
             value = var.x
             supplier_capacity_ratio_result[supplier] = value
 
-        pool_capacity_ratio_avg_result = dict()
-        for pool, var in self.vars[VarName.POOL_CAPACITY_RATIO_AVG].items():
-            value = var.x
-            pool_capacity_ratio_avg_result[pool] = value
-
         self.result = {
             ResultName.ORDER_MACHINE_DATE: order_machine_date_result,
-            ResultName.SUPPLIER_CAPACITY_RATIO: supplier_capacity_ratio_result,
-            ResultName.POOL_CAPACITY_RATIO_AVG: pool_capacity_ratio_avg_result
+            ResultName.SUPPLIER_CAPACITY_RATIO: supplier_capacity_ratio_result
         }
+
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_POOL]:
+            pool_capacity_ratio_avg_result = dict()
+            for pool, var in self.vars[VarName.POOL_CAPACITY_RATIO_AVG].items():
+                value = var.x
+                pool_capacity_ratio_avg_result[pool] = value
+            self.result[ResultName.POOL_CAPACITY_RATIO_AVG] = \
+                pool_capacity_ratio_avg_result
 
         # 款分配至实体供应商结果
         item_supplier_result = dict()

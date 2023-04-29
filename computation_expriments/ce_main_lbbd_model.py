@@ -5,6 +5,7 @@ import pandas as pd
 
 from ce_analysis import ModelAnalysis
 from model_prepare.feature_prepare_random import FeaturePrepareRandom
+from models.full_model.full_model_alpha import FullModelAlpha
 from models.lbbd_model.lbbd import LogicBasedBenders
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare_semir import FeaturePrepareSemir
@@ -21,7 +22,7 @@ def main():
     output_dir = ori_dir+"data/output/LBBD/"
     # size_set = [ "uat_1_full", "da_type_2_online_solve"]
     # size_set = ["A"]        # , "B", "C", "D"]
-    size_set = ["Set_3","Set_4"]        # ["nIterOver1"]
+    size_set = ["Set_5"]        # ["nIterOver1"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))
@@ -74,6 +75,7 @@ def main():
                                                      'Runtime', 'lowerBound', 'iteration', 'is_correct', 'finished_item_num', 'finished_order_num', 'pool_1', 'pool_2',\
                                                      'pool_3', 'pool_4', 'pool_5'])
             out_df.to_csv(output_dir+size_name+".csv", encoding='utf-8-sig')
+
 
 
 if __name__ == '__main__':

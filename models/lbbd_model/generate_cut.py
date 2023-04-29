@@ -30,16 +30,16 @@ class GenerateCut:
         self.data = data
 
 
-    def generate_mis(self, sub_model):
+    def generate_mis(self, sub_model, descending):
         """
         寻找最小不可行款式集合
 
         """
         item_list = None
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.CUT_MODE] == 0:
-            item_list = self.greedy_gen_mis(sub_model)
+            item_list = self.greedy_gen_mis(sub_model, descending)
         elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.CUT_MODE] == 1:
-            item_list = self.dfbs_gen_mis(sub_model)
+            item_list = self.dfbs_gen_mis(sub_model, descending)
         # 将MIS放到其他supplier上进行测试
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_LIFT]:
@@ -49,24 +49,27 @@ class GenerateCut:
 
 
 
-    def sort_items_by_quantity(self, item_list):
+    def sort_items_by_quantity(self, item_list, is_descending):
         quantity = []
         for item in item_list:
             quantity.append(self.data[ParaName.ITEM_QUANTITY_DICT][item])
 
         quantity = np.array(quantity)
-        idx = np.argsort(quantity)
+        if is_descending:
+            idx = np.argsort(-quantity)
+        else:
+            idx = np.argsort(quantity)
         sorted_item_list = []
         for i in range(len(quantity)):
             sorted_item_list.append(item_list[idx[i]])
         return sorted_item_list
 
-    def dfbs_gen_mis(self, sub_model):
+    def dfbs_gen_mis(self, sub_model, is_descending):
         """
         depth first binary search 寻找最小不可行款集合
         """
         sub_data = sub_model.sub_data
-        item_list = self.sort_items_by_quantity(item_list=sub_data[LBBDSubDataName.ITEM_LIST])
+        item_list = self.sort_items_by_quantity(item_list=sub_data[LBBDSubDataName.ITEM_LIST], is_descending=is_descending)
 
         sub_data_copy = copy.deepcopy(sub_data)
         relaxed_sub_model = RelaxedSubModel(self.data, sub_data_copy, len(item_list), 2)
@@ -88,11 +91,11 @@ class GenerateCut:
                 is_feasible = relaxed_sub_model.solve(mode=1)
                 if not is_feasible:
                     # 不可行
-                    # logger.info("!!!!!!!!!" + "供应商：" + str(sub_data_copy[LBBDSubDataName.SUPPLIER]) +"最小不可行集合!!!!!!!!!")
-                    # print('[', end='')
-                    # for item in I_item_list:
-                    #     print(str(item), end=',')
-                    # print(']')
+                    logger.info("!!!!!!!!!" + "供应商：" + str(sub_data_copy[LBBDSubDataName.SUPPLIER]) +"最小不可行集合(dfbs)!!!!!!!!!, is_descending："+str(is_descending))
+                    print('[', end='')
+                    for item in I_item_list:
+                        print(str(item), end=',')
+                    print(']')
                     return I_item_list
                 T_item_list = copy.deepcopy(S_item_list)
                 S_item_list = []
@@ -124,13 +127,13 @@ class GenerateCut:
                     relaxed_sub_model.model.remove(c)
                     I_item_list.remove(item)
 
-    def greedy_gen_mis(self, sub_model):
+    def greedy_gen_mis(self, sub_model, is_descending):
         """
         贪婪方法寻找最小不可行款集合
         """
         sub_data = sub_model.sub_data
         supplier = sub_model.supplier
-        item_list = self.sort_items_by_quantity(item_list=sub_data[LBBDSubDataName.ITEM_LIST])
+        item_list = self.sort_items_by_quantity(item_list=sub_data[LBBDSubDataName.ITEM_LIST], is_descending=is_descending)
         flag = True
         idx = 0
         while flag:
@@ -151,11 +154,11 @@ class GenerateCut:
                     break
             if all_feasible or (len(item_list) == 1):
                 # 不可行
-                # logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!")
-                # print('[', end='')
-                # for item in item_list:
-                #     print(str(item), end=',')
-                # print(']')
+                logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!, is_descending："+str(is_descending))
+                print('[', end='')
+                for item in item_list:
+                    print(str(item), end=',')
+                print(']')
                 # 去掉所有款式都可行，则说明找到了令supplier 产生不可解的最小款组合方案
                 flag = False
         return item_list

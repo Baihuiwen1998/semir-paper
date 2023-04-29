@@ -24,9 +24,9 @@ def cal_cum_dis(dis):
     return cum_dis
 
 for i in range(5):
-    num_of_item = 200
+    num_of_item = 100
     num_of_supplier = 10
-    num_of_machine_types = 10
+    num_of_machine_types = 15
     num_of_periods = 120
     num_of_periods_per_hat = 30
     num_of_hat_periods = math.ceil(num_of_periods/num_of_periods_per_hat)   # 向上取整
@@ -35,7 +35,7 @@ for i in range(5):
     distribution_of_num_of_order_per_item = [0.113, 0.243, 0.243, 0.333, 0.04, 0.011, 0.006, 0.006, 0.005] # 1为起始 1为距离
     distribution_of_order_quantity = [0.35, 0.28, 0.2, 0.1, 0.05, 0.02]         # 0为起始 以 10 为距离
     distribution_of_num_of_machine_per_supplier = [0.296, 0.185, 0.074, 0.111, 0.148, 0.111, 0.037, 0.038] # 1为起始 1为距离
-    distribution_of_machine_types_per_item = [0.4, 0.4, 0.2]
+    distribution_of_machine_types_per_item = [0.5, 0.4, 0.1]
     distribution_of_order_time_range = [0.091, 0.091, 0.182, 0.091, 0.182, 0.091, 0.091, 0.08, 0.06, 0.042] # 35为起点，gap为5
     cum_distribution_of_num_of_order_per_item = cal_cum_dis(distribution_of_num_of_order_per_item)
     cum_distribution_of_order_quantity = cal_cum_dis(distribution_of_order_quantity)
@@ -44,8 +44,8 @@ for i in range(5):
     cum_distribution_of_order_time_range = cal_cum_dis(distribution_of_order_time_range)
 
     distribution_of_supplier_daily_max = [0.15, 0.08, 0.161, 0.05, 0.024, 0.03, 0.056, 0.065, 0.058, 0.03, 0.048, 0.038, 0.035, 0.022, 0.015, 0.008, 0.03, 0.015, 0.015, 0.02, 0.01, 0.01, 0.01, 0.01, 0.01] # 2 为开始，跨度为1
-    distribution_of_machine_monthly_max = [0.3, 0.2, 0.1,0.1,0.1,0.1,0.1] # 10为起点，30为跨度
-    distribution_of_item_daily_max = [0.6, 0.3, 0.07, 0.03] # 1为起点， 跨度为1
+    distribution_of_machine_monthly_max = [0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1] # 10为起点，30为跨度
+    distribution_of_item_daily_max = [0.5, 0.3, 0.12, 0.08] # 1为起点， 跨度为1
     cum_distribution_of_supplier_daily_max = cal_cum_dis(distribution_of_supplier_daily_max)
     cum_distribution_of_machine_monthly_max = cal_cum_dis(distribution_of_machine_monthly_max)
     cum_distribution_of_item_daily_max = cal_cum_dis(distribution_of_item_daily_max)
@@ -163,7 +163,7 @@ for i in range(5):
     calendar_df = pd.DataFrame(calendar_list, columns=[CalendarHeader.DATE, CalendarHeader.MONTH])
 
 
-    random_file_dir = "/Users/emmabai/PycharmProjects/semir-paper/" + "data/input/random_data/Set_5/"+str(i)+"/"
+    random_file_dir = "/Users/emmabai/PycharmProjects/semir-paper/" + "data/input/random_data/Set_6/"+str(i)+"/"
     os.makedirs(random_file_dir, exist_ok=True)
     item_df.to_csv(os.path.join(random_file_dir, FileName.ITEM_FILE_NAME + '.csv'), index=False)
     machine_df.to_csv(

@@ -47,7 +47,7 @@ def main():
             ol.append(len(data[SetName.ORDER_LIST]))
             ol.append(len(data[SetName.SUPPLIER_LIST]))
             ol.append(len(data[SetName.MACHINE_LIST]))
-
+            is_opt = True
             result = None
             # 建立整体模型并求解
             full_model = FullModelAlpha(data)
@@ -56,7 +56,7 @@ def main():
             if result:
                 # 结果  检查 + 分析
                 ma = ModelAnalysis(data, result)
-                is_correct, finished_rate_list = ma.analysis_result()
+                is_correct, finished_rate_list = ma.analysis_result(is_opt)
                 if is_correct:
                     ol.append(full_model.model.objVal)
                     ol.append(full_model.model.Runtime)

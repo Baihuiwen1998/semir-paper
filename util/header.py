@@ -80,19 +80,21 @@ class ParamsMark:
     CUT_MODE = 'cut_mode'
     IS_LIFT = 'is_lift'
     IS_RANDOM_DATA = 'is_random_data'
+    IS_POOL = 'is_pool'
     ALL_PARAMS_DICT = {MAX_ITERATION: 500,
                        MAX_RUNTIME: 3600,
                        SHARE_LEVEL: 0,
                        CAPACITY_AVERAGE_OBJ: True,
-                       CAPACITY_LADDEL_OBJ: True,
+                       CAPACITY_LADDEL_OBJ: False,
                        NU_VAR: False,
                        MIP_GAP: 0.001,
                        ITEM_MULTI_SUPPLIER: False,
                        MILP_MODEL: 0,    # {0:alpha, 1:beta}
-                       SOLUTION_MODE: 0,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
+                       SOLUTION_MODE: 2,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
                        CUT_MODE: 0,      # {0: greedy, 1: dbfs}
                        IS_LIFT: False,
-                       IS_RANDOM_DATA: True
+                       IS_RANDOM_DATA: True,
+                       IS_POOL: False
                        }
 
 

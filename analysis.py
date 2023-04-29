@@ -136,9 +136,9 @@ class ModelAnalysis:
                     logger.info(
                         f"{month}_产线_{machine}_的产量_{sum_machine_month_production}_超过月上限_{self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get((machine, month), 0)}")
                     return False
-
-        # 池内的最大和最小产能规划达成率 和平均达成率
-        for pool in self.result[ResultName.POOL_CAPACITY_RATIO_AVG]:
-            logger.info(f"{pool}_的平均产能规划达成率为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_AVG][pool], '.4f')}")
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_POOL]:
+            # 池内的最大和最小产能规划达成率 和平均达成率
+            for pool in self.result[ResultName.POOL_CAPACITY_RATIO_AVG]:
+                logger.info(f"{pool}_的平均产能规划达成率为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_AVG][pool], '.4f')}")
 
         return True
