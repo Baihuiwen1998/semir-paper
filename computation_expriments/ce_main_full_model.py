@@ -21,7 +21,8 @@ def main():
     input_dir = ori_dir + "data/input/random_data/"
     output_dir = ori_dir+"data/output/MIP/"
     size_set = ["Set_6"]
-    # size_set = ["C", "D"]
+    # size_set = [ "uat_1_full", "da_type_2_online_solve"]
+    # size_set = ["A", "B", "C", "D"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))

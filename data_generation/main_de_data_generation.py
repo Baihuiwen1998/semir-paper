@@ -28,7 +28,6 @@ def main():
     ori_dir = "D:/Codes/Python/semir-paper/"
     input_dir = ori_dir+"data/input/raw_data/"
     output_desensitized_dir = ori_dir+"data/input/desensitized_data/"
-    # output_synthetic_dir = ori_dir+"data/input/synthetic_data/"
     file = 'da_type_2_online_solve/'
 
     # 原数据读取

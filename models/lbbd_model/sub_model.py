@@ -130,7 +130,7 @@ class SubModel:
         求解子问题
         mode = 1时，只对模型进行检验是否可行，不求最优解
         mode = 2时，对模型求最优解
-        mode = 3时，求解模型的松弛解
+
 
         4. 模型求解参数设置
         5. 求解并获取求解结果
@@ -155,8 +155,6 @@ class SubModel:
         elif mode == 2:
             # self.model.setParam(gp.GRB.Param.OutputFlag, 1)
             # 求最优解
-            self.model.setParam(gp.GRB.Param.SolutionLimit, 2000000000)
-        elif mode == 3:
             self.model.setParam(gp.GRB.Param.SolutionLimit, 2000000000)
 
     def gen_model_result(self, mode):

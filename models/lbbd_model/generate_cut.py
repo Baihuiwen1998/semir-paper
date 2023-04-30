@@ -166,36 +166,45 @@ class GenerateCut:
         贪婪方法寻找最小不可行款集合
         """
         sub_data = sub_model.sub_data
-        supplier = sub_model.supplier
-        item_list = self.sort_items_by_quantity(item_list=sub_data[LBBDSubDataName.ITEM_LIST], is_descending=is_descending)
+        item_list = sub_data[LBBDSubDataName.ITEM_LIST]
+
+        sub_data_copy = copy.deepcopy(sub_data)
+        relaxed_sub_model = RelaxedSubModel(self.data, sub_data_copy, len(item_list), 2)
+        relaxed_sub_model.construct()
+
+        for item in item_list:
+            relaxed_sub_model.add_alpha_equals_1_constrains(item)
+        is_feasible = relaxed_sub_model.solve(mode=1)
+        T_item_list = self.sort_items_by_quantity(item_list=sub_data[LBBDSubDataName.ITEM_LIST],
+                                                  is_descending=is_descending)
         flag = True
         idx = 0
         while flag:
             all_feasible = True
-            while idx < len(item_list):
-                item = item_list[idx]
+            while idx < len(T_item_list):
+                item = T_item_list[idx]
                 idx += 1
-                sub_data_copy = copy.deepcopy(sub_data)
-                sub_data_copy[LBBDSubDataName.ITEM_LIST] = copy.deepcopy(item_list)
-                sub_data_copy[LBBDSubDataName.ITEM_LIST].remove(item)
-                sub_model = SubModel(self.data, sub_data_copy)
-                sub_model.construct()
-                if_feasible = sub_model.solve(mode=1)
-                if not if_feasible:
-                    item_list = sub_data_copy[LBBDSubDataName.ITEM_LIST]
+                c = relaxed_sub_model.model.getConstrByName(f"item_{item}_production")
+                # c.__dict__
+                relaxed_sub_model.model.remove(c)
+                is_feasible = relaxed_sub_model.solve(mode=1)
+                if not is_feasible:
+                    T_item_list.remove(item)
                     all_feasible = False
                     idx -= 1
                     break
+                else:
+                    relaxed_sub_model.add_alpha_equals_1_constrains(item)
             if all_feasible or (len(item_list) == 1):
                 # 不可行
-                logger.info("!!!!!!!!!" + "供应商：" + str(supplier) + "子问题不可行!!!!!!!!!, is_descending："+str(is_descending))
+                logger.info("!!!!!!!!!" + "供应商：" + str(sub_model.supplier) + "子问题不可行!!!!!!!!!, is_descending："+str(is_descending))
                 print('[', end='')
-                for item in item_list:
+                for item in T_item_list:
                     print(str(item), end=',')
                 print(']')
                 # 去掉所有款式都可行，则说明找到了令supplier 产生不可解的最小款组合方案
                 flag = False
-        return item_list
+        return T_item_list
 
     def cut_lifting(self, sub_model, item_list):
         mis_size = len(item_list)
@@ -221,7 +230,6 @@ class GenerateCut:
 
                     lifted_item_list.append(item)
         return lifted_item_list, mis_size
-
 
     # def add_mis_to_other_suppliers(self, item_list, tested_supplier):
     #     """

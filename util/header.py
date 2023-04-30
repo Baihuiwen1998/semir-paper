@@ -74,13 +74,13 @@ class ParamsMark:
     CAPACITY_LADDEL_OBJ = 'capacity_ladder_obj'     # 是否启动供应商池成阶梯目标函数
     NU_VAR = 'nu_var'                               # 是否启用变量nu
     MIP_GAP = 'mip_gap'                                 # 求解停止准则
-    ITEM_MULTI_SUPPLIER = 'item_multi_supplier'       # 一个款式内的订单可以分给多个supplier生产
+    ITEM_MULTI_SUPPLIER = 'item_multi_supplier'       # 一个款式内的订单可以分给多个supplier生产,用于beta模型
     MILP_MODEL = 'milp_model'                           # 选择采用alpha还是beta为决策变量的MILP模型
-    SOLUTION_MODE = 'solution_mode'
-    CUT_MODE = 'cut_mode'
+    SOLUTION_MODE = 'solution_mode'                     # 模型求解算法
+    CUT_MODE = 'cut_mode'                               # 产生lb割的算法
     IS_LIFT = 'is_lift'
-    IS_RANDOM_DATA = 'is_random_data'
-    IS_POOL = 'is_pool'
+    IS_RANDOM_DATA = 'is_random_data'                       # 算例为semir真实数据or抽样数据or随机数据
+    IS_POOL = 'is_pool'                                     # 是否考虑供应商分池内部均衡
     ALL_PARAMS_DICT = {MAX_ITERATION: 500,
                        MAX_RUNTIME: 3600,
                        SHARE_LEVEL: 0,
@@ -90,10 +90,10 @@ class ParamsMark:
                        MIP_GAP: 0.001,
                        ITEM_MULTI_SUPPLIER: False,
                        MILP_MODEL: 0,    # {0:alpha, 1:beta}
-                       SOLUTION_MODE: 1,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
-                       CUT_MODE: 1,      # {0: greedy-mis, 1: dbfs, 2:greedy-cut}
+                       SOLUTION_MODE: 2,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
+                       CUT_MODE: 0,      # {0: greedy-mis, 1: dbfs, 2:greedy-cut}
                        IS_LIFT: False,
-                       IS_RANDOM_DATA: True,
+                       IS_RANDOM_DATA: False,
                        IS_POOL: False
                        }
 

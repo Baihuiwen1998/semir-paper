@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 def main():
 
     ori_dir = os.getcwd()
-    input_dir = ori_dir+"/data/input/random_data/"
-    file_name = 'Set_4/3/'
+    input_dir = ori_dir+"/data/input/synthetic_data/"
+    file_name = 'B/B_4_uat_1_full_梭织/'
 
     # 数据处理
     dp = DataPrepare(input_dir, file_name)

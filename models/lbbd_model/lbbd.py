@@ -1,8 +1,7 @@
-from models.full_model.relaxed_full_model_alpha import RelaxedFullModelAlpha
+
 from models.lbbd_model.generate_cut import GenerateCut
 from models.lbbd_model.master_model import MasterModel
 from config import *
-from models.lbbd_model.relaxed_master_model import RelaxedMasterModel
 from models.lbbd_model.relaxed_sub_model import RelaxedSubModel
 from models.lbbd_model.sub_model import SubModel
 from models.lbbd_model.generate_cut import cal_sub_data
@@ -76,7 +75,7 @@ class LogicBasedBenders:
                     # 调用寻找benders cut函数
                     self.lbbd_cut_data[LBBDCutName.MIS_BY_SUPPLIER_DICT][sub_model.supplier], \
                     self.lbbd_cut_data[LBBDCutName.MIS_SIZE_BY_SUPPLIER_DICT][sub_model.supplier] = \
-                        self.cut_generator.generate_mis(sub_model)
+                        self.cut_generator.generate_mis(sub_model, False)
 
             # 如果全都可行，求解子问题
             if all_sub_feasible:
@@ -107,22 +106,9 @@ class LogicBasedBenders:
                 self.master_model.add_fixed_assignments(self.result[LBBDResultName.SUB_RESULT])
                 self.master_model.construct_as_full_model()
                 self.result = self.master_model.gen_model_result_as_full_model()
-
-                # self.result[LBBDResultName.MASTER_RESULT] = relaxed_master_model.solve(self.lbbd_cut_data)
-                # self.result[LBBDResultName.RUN_TIME] = end_time - start_time
-                # self.result[LBBDResultName.OBJ_VALUE] = relaxed_master_model.model.objVal
-                # self.result[LBBDResultName.LOWER_BOUND] = self.master_model.model.objVal
-                # self.result[LBBDResultName.ITERATION] = iteration
-
-                # 建立完整模型求解
-                # relaxed_model = RelaxedFullModelAlpha(self.data)
-                # relaxed_model.construct_model()
-                # relaxed_model.add_fixed_assignments(self.result[LBBDResultName.SUB_RESULT])
-                # self.result = relaxed_model.gen_model_result()
                 break
         # 超出时长or MAX_ITERATION 时，获取一个可行解
         return False, self.result
-
 
     def update_data(self):
         self.sub_models = dict()

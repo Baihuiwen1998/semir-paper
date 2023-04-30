@@ -10,23 +10,23 @@ logger = logging.getLogger(__name__)
 
 
 class ModelAnalysis:
-
     def __init__(self, data, result):
         self.data = data
         self.result = result
 
-    def analysis_result(self, optimal):
+    def analysis_result(self, is_lbbd_optimal):
         """
         主函数
+        求解lbbd 或 Branch-and-check时，到达timelimit时若问题没有求得最优解，此时获得不可行解，则固定主问题分配直接求解mip，所以标记is_lbbd_optimal = false
         """
-        self.optimal = optimal
+        self.is_lbbd_optimal = is_lbbd_optimal
         is_correct, finished_rate_list = self.correctness_analyse()
         logger.info('结果检查完成')
         return is_correct, finished_rate_list
 
     def correctness_analyse(self):
         finished_rate_list = list()
-        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0 and self.optimal:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0 and self.is_lbbd_optimal:
             result = dict()
             item_supplier = dict()
             order_machine_date = dict()
@@ -35,7 +35,7 @@ class ModelAnalysis:
                 order_machine_date.update(self.result[LBBDResultName.SUB_RESULT][supplier][ResultName.ORDER_MACHINE_DATE])
             result[ResultName.ITEM_SUPPLIER] = item_supplier
             result[ResultName.ORDER_MACHINE_DATE] = order_machine_date
-            if not ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
+            if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_POOL]:
                 result[ResultName.POOL_CAPACITY_RATIO_AVG] = self.result[LBBDResultName.MASTER_RESULT][
                 ResultName.POOL_CAPACITY_RATIO_AVG]
             result[ResultName.SUPPLIER_CAPACITY_RATIO] = self.result[LBBDResultName.MASTER_RESULT][
@@ -130,6 +130,5 @@ class ModelAnalysis:
             for pool in self.result[ResultName.POOL_CAPACITY_RATIO_AVG]:
                 logger.info(f"{pool}_的平均产能规划达成率为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_AVG][pool], '.4f')}")
                 finished_rate_list.append(f"{pool}_的平均产能规划达成率为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_AVG][pool], '.4f')}")
-
 
         return True, finished_rate_list

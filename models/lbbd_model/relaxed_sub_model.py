@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class RelaxedSubModel:
     """
-    建立子问题模型
+    建立松弛子问题模型，用于寻找cut
     """
 
     def __init__(self, data, sub_data, mis_size, relax_mode):

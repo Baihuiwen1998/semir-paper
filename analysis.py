@@ -34,8 +34,9 @@ class ModelAnalysis:
                 order_machine_date.update(self.result[LBBDResultName.SUB_RESULT][supplier][ResultName.ORDER_MACHINE_DATE])
             result[ResultName.ITEM_SUPPLIER] = item_supplier
             result[ResultName.ORDER_MACHINE_DATE] = order_machine_date
-            result[ResultName.POOL_CAPACITY_RATIO_AVG] = self.result[LBBDResultName.MASTER_RESULT][
-                ResultName.POOL_CAPACITY_RATIO_AVG]
+            if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_POOL]:
+                result[ResultName.POOL_CAPACITY_RATIO_AVG] = self.result[LBBDResultName.MASTER_RESULT][
+                    ResultName.POOL_CAPACITY_RATIO_AVG]
             result[ResultName.SUPPLIER_CAPACITY_RATIO] = self.result[LBBDResultName.MASTER_RESULT][
                 ResultName.SUPPLIER_CAPACITY_RATIO]
             self.result = result
