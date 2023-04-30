@@ -231,13 +231,13 @@ class TestRelaxedSubModel:
                 for (supplier, date), var in self.vars['supplier_date_max'].items():
                     value = var.x
                     if value > 0.001:
-                        print(str(supplier) + "," + date + ", 超出日上限:" + str(value))
+                        print(str(supplier) + "," + str(date) + ", 超出日上限:" + str(value))
                         supplier_date_max[supplier, date] = value
                 machine_month_max = dict()
                 for (machine, month), var in self.vars['machine_month_max'].items():
                     value = var.x
                     if value > 0.001:
-                        print(str(machine) + "," + month + ", 超出月上限:" + str(value))
+                        print(str(machine) + "," + str(month) + ", 超出月上限:" + str(value))
                         machine_month_max[machine, month] = value
                 self.result = {
                     ResultName.ORDER_MACHINE_DATE: order_machine_date_result,

@@ -40,7 +40,8 @@ class GenerateCut:
             item_list = self.greedy_gen_mis(sub_model, descending)
         elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.CUT_MODE] == 1:
             item_list = self.dfbs_gen_mis(sub_model, descending)
-        # 将MIS放到其他supplier上进行测试
+        elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.CUT_MODE] == 2:
+            item_list = self.greedy_gen_cut(sub_model)
 
         if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_LIFT]:
             return self.cut_lifting(sub_model, item_list)
@@ -63,6 +64,39 @@ class GenerateCut:
         for i in range(len(quantity)):
             sorted_item_list.append(item_list[idx[i]])
         return sorted_item_list
+
+    def greedy_gen_cut(self, sub_model):
+        """
+        greedy：持续随机挑选变量赋值为0，直到可行，输出所偶有取值为1的变量集合
+        """
+        sub_data = sub_model.sub_data
+        item_list = sub_data[LBBDSubDataName.ITEM_LIST]
+
+        sub_data_copy = copy.deepcopy(sub_data)
+        relaxed_sub_model = RelaxedSubModel(self.data, sub_data_copy, len(item_list), 2)
+        relaxed_sub_model.construct()
+
+        T_item_list = copy.deepcopy(item_list)
+        for item in item_list:
+            relaxed_sub_model.add_alpha_equals_1_constrains(item)
+        is_feasible = relaxed_sub_model.solve(mode=1)
+
+        while True:
+            item_selected = T_item_list[0]
+            c = relaxed_sub_model.model.getConstrByName(f"item_{item_selected}_production")
+            relaxed_sub_model.model.remove(c)
+
+            is_feasible = relaxed_sub_model.solve(mode=1)
+            if is_feasible:
+                # 不可行
+                logger.info("!!!!!!!!!子问题不可行greedy-cut!!!!!!!!!")
+                print('[', end='')
+                for item in T_item_list:
+                    print(str(item), end=',')
+                print(']')
+                return T_item_list
+            else:
+                T_item_list.remove(item_selected)
 
     def dfbs_gen_mis(self, sub_model, is_descending):
         """

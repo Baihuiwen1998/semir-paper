@@ -22,7 +22,7 @@ def main():
     output_dir = ori_dir+"data/output/LBBD/"
     # size_set = [ "uat_1_full", "da_type_2_online_solve"]
     # size_set = ["A"]        # , "B", "C", "D"]
-    size_set = ["Set_5"]        # ["nIterOver1"]
+    size_set = ["Set_5", "Set_6", "Set_7"]        # ["nIterOver1"]
     for size_name in size_set:
         out_list = list()
         out_list.append((1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))

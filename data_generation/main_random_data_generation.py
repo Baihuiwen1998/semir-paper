@@ -24,9 +24,9 @@ def cal_cum_dis(dis):
     return cum_dis
 
 for i in range(5):
-    num_of_item = 100
-    num_of_supplier = 10
-    num_of_machine_types = 15
+    num_of_item = 120
+    num_of_supplier = 12
+    num_of_machine_types = 10
     num_of_periods = 120
     num_of_periods_per_hat = 30
     num_of_hat_periods = math.ceil(num_of_periods/num_of_periods_per_hat)   # 向上取整
@@ -164,7 +164,7 @@ for i in range(5):
     calendar_df = pd.DataFrame(calendar_list, columns=[CalendarHeader.DATE, CalendarHeader.MONTH])
 
 
-    random_file_dir = "/Users/emmabai/PycharmProjects/semir-paper/" + "data/input/random_data/Set_6/"+str(i)+"/"
+    random_file_dir = "/Users/emmabai/PycharmProjects/semir-paper/" + "data/input/random_data/Set_7/"+str(i)+"/"
     os.makedirs(random_file_dir, exist_ok=True)
     item_df.to_csv(os.path.join(random_file_dir, FileName.ITEM_FILE_NAME + '.csv'), index=False)
     machine_df.to_csv(
