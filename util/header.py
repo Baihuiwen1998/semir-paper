@@ -91,7 +91,7 @@ class ParamsMark:
                        NU_VAR: False,
                        MIP_GAP: 0.001,
                        ITEM_MULTI_SUPPLIER: False,
-                       MILP_MODEL: 0,    # {0:alpha, 1:beta}
+                       MILP_MODEL: 1,    # {0:alpha, 1:beta}
                        SOLUTION_MODE: 0,     # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
                        CUT_MODE: 0,      # {0: greedy-mis, 1: dbfs, 2:greedy-cut}
                        IS_LIFT: False,
