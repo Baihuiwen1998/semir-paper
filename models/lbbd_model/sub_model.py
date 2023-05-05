@@ -1,6 +1,7 @@
 import logging
 import gurobipy as gp
 from config import *
+from util.header import ParamsMark
 from util.util import var_name_regularizer
 
 logger = logging.getLogger(__name__)
@@ -78,16 +79,17 @@ class SubModel:
         # 款式日生产上限
         # =============
         # logger.info('模型添加约束：对款的单日生产上限限制')
-        for item in self.sub_data[LBBDSubDataName.ITEM_LIST]:
-            for date in self.data[SetName.ITEM_TIME_DICT][item]:
-                self.model.addConstr(gp.quicksum(
-                    self.vars[VarName.Z].get((order, machine, date), 0) for order in
-                    self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                    for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
-                                                    set(self.sub_data[LBBDSubDataName.MACHINE_LIST]))
-                ) <= self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item],
-                                     name=f"production_limit_of_item_{item}_on_{date}"
-                                     )
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_ITEM_MAX]:
+            for item in self.sub_data[LBBDSubDataName.ITEM_LIST]:
+                for date in self.data[SetName.ITEM_TIME_DICT][item]:
+                    self.model.addConstr(gp.quicksum(
+                        self.vars[VarName.Z].get((order, machine, date), 0) for order in
+                        self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                        for machine in set.intersection(set(self.data[SetName.MACHINE_BY_ORDER_DICT][order]),
+                                                        set(self.sub_data[LBBDSubDataName.MACHINE_LIST]))
+                    ) <= self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item],
+                                         name=f"production_limit_of_item_{item}_on_{date}"
+                                         )
 
         # =============
         # 实体供应商产能日上限

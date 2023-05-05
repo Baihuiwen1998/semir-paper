@@ -21,13 +21,15 @@ logging.basicConfig(level=logging.DEBUG, format=formatter)
 logger = logging.getLogger(__name__)
 
 def main():
-    ori_dir = "D:/Codes/Python/semir-paper/"
+    ori_dir = "/Users/emmabai/PycharmProjects/semir-paper/"
     input_dir = ori_dir + "data/input/synthetic_data/"
     output_dir = ori_dir+"data/output/ALL_MODELS/"
-    size_set = ["B"]
+    size_set = [ "B", "D"]
     # size_set = [ "uat_1_full", "da_type_2_online_solve"]
     # size_set = ["A", "B", "C", "D"]
     for size_name in size_set:
+        if size_name == "B":
+            ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA] = False
         out_list = list()
         out_list.append((1, 1, 1,  1, 1, 1, 1, 1, 1, 1, 1,  1, 1,  1,  1, 1))
         path = input_dir+size_name+"/"
@@ -35,23 +37,23 @@ def main():
             ol = list()
             ol.append(file_name)
 
-            # 数据处理
-            dp = DataPrepare(path, file_name+"/")
-            data = dp.prepare()
-            # 特征处理
-            if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
-                fp = FeaturePrepareRandom(data, file_name)
-            else:
-                fp = FeaturePrepareSemir(data, file_name)
-            data = fp.prepare()
-            ol.append(len(data[SetName.ITEM_LIST]))
-            ol.append(len(data[SetName.ORDER_LIST]))
-            ol.append(len(data[SetName.SUPPLIER_LIST]))
-            ol.append(len(data[SetName.MACHINE_LIST]))
-
             for solution_mode in range(3):
                 ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] = solution_mode
                 if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 0:
+                    # print("skip")
+                    # 数据处理
+                    dp = DataPrepare(path, file_name + "/")
+                    data = dp.prepare()
+                    # 特征处理
+                    if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
+                        fp = FeaturePrepareRandom(data, file_name)
+                    else:
+                        fp = FeaturePrepareSemir(data, file_name)
+                    data = fp.prepare()
+                    ol.append(len(data[SetName.ITEM_LIST]))
+                    ol.append(len(data[SetName.ORDER_LIST]))
+                    ol.append(len(data[SetName.SUPPLIER_LIST]))
+                    ol.append(len(data[SetName.MACHINE_LIST]))
                     # 建立整体ALPHA模型并求解
                     full_model = FullModelAlpha(data)
                     full_model.construct_model()
@@ -70,6 +72,19 @@ def main():
                             ol.append(full_model.model.ObjBound)
                             ol.extend(finished_rate_list)
                 elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] == 1:
+                    # 数据处理
+                    dp = DataPrepare(path, file_name + "/")
+                    data = dp.prepare()
+                    # 特征处理
+                    if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
+                        fp = FeaturePrepareRandom(data, file_name)
+                    else:
+                        fp = FeaturePrepareSemir(data, file_name)
+                    data = fp.prepare()
+                    # ol.append(len(data[SetName.ITEM_LIST]))
+                    # ol.append(len(data[SetName.ORDER_LIST]))
+                    # ol.append(len(data[SetName.SUPPLIER_LIST]))
+                    # ol.append(len(data[SetName.MACHINE_LIST]))
                     # 建立LBBD模型并求解
                     lbbd = LogicBasedBenders(data)
                     is_opt, result = lbbd.solve()
@@ -84,6 +99,15 @@ def main():
                         ol.append(result[LBBDResultName.ITERATION])
                         ol.extend(finished_rate_list)
                 else:
+                    # 数据处理
+                    dp = DataPrepare(path, file_name + "/")
+                    data = dp.prepare()
+                    # 特征处理
+                    if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
+                        fp = FeaturePrepareRandom(data, file_name)
+                    else:
+                        fp = FeaturePrepareSemir(data, file_name)
+                    data = fp.prepare()
                     # 建立主问题模型并求解
                     result = dict()
                     master_model = MasterModel(data)
@@ -111,10 +135,9 @@ def main():
                         ol.extend(finished_rate_list)
 
             out_list.append(ol)
-            out_df = pd.DataFrame(out_list, columns=['name', 'item_num', 'order_num', 'supplier_num', 'machine_num', 'objVal_MIP',\
-                                                 'Runtime', 'Gap', 'lowerBound',  'finished_item_num', 'finished_order_num', 'objVal_LBBD', 'Runtime', 'Gap', 'lowerBound', 'iterNum','finished_item_num',
+            out_df = pd.DataFrame(out_list, columns=['name', 'item_num', 'order_num', 'supplier_num', 'machine_num', 'objVal_MIP', 'Runtime', 'Gap', 'lowerBound',  'finished_item_num', 'finished_order_num', 'objVal_LBBD', 'Runtime', 'Gap', 'lowerBound', 'iterNum','finished_item_num',
                                                      'finished_order_num', 'objVal_B&CH', 'Runtime', 'Gap', 'lowerBound', 'finished_item_num',
-                                                     'finished_order_num'])
+                                                     'finished_order_num']) #
             out_df.to_csv(output_dir + size_name + ".csv", encoding='utf-8-sig')
 
 

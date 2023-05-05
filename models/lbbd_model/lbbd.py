@@ -93,6 +93,7 @@ class LogicBasedBenders:
             # 否则，更新计算时长
             end_time = time.time()
             if end_time - start_time > ParamsMark.ALL_PARAMS_DICT[ParamsMark.MAX_RUNTIME]:
+                lower_bound = self.master_model.model.objVal
                 # 超出计算时长
                 # 求解子问题得到最多可以生产的款式数
                 self.result[LBBDResultName.SUB_RESULT] = dict()
@@ -106,6 +107,13 @@ class LogicBasedBenders:
                 self.master_model.add_fixed_assignments(self.result[LBBDResultName.SUB_RESULT])
                 self.master_model.construct_as_full_model()
                 self.result = self.master_model.gen_model_result_as_full_model()
+                self.result[LBBDResultName.LOWER_BOUND] = lower_bound
+
+
+                self.result[LBBDResultName.RUN_TIME] = end_time - start_time
+                self.result[LBBDResultName.OBJ_VALUE] = self.master_model.model.objVal
+                self.result[LBBDResultName.ITERATION] = iteration
+
                 break
         # 超出时长or MAX_ITERATION 时，获取一个可行解
         return False, self.result

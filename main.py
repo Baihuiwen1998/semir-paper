@@ -21,7 +21,7 @@ def main():
 
     ori_dir = os.getcwd()
     input_dir = ori_dir+"/data/input/synthetic_data/"
-    file_name = 'B/B_4_uat_1_full_梭织/'
+    file_name = 'C/C_1_uat_1_full_梭织/'
 
     # 数据处理
     dp = DataPrepare(input_dir, file_name)

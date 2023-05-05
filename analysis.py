@@ -86,20 +86,20 @@ class ModelAnalysis:
                 if sum_order_production != 0:
                     logger.info(f"不开展生产的订单_{order}_的产量_{sum_order_production}超过0")
                     return False
-
-        # 款式日产能上限
-        for item in self.data[SetName.ITEM_LIST]:
-            if self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item] > 0:
-                for date in self.data[SetName.ITEM_TIME_DICT][item]:
-                    sum_item_date_production = \
-                        sum(self.result[ResultName.ORDER_MACHINE_DATE].get((order, machine, date), 0) for order in
-                            self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                            for machine in self.data[SetName.MACHINE_BY_ORDER_DICT][order]
-                            )
-                    if sum_item_date_production > self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]:
-                        logger.info(
-                            f"{date}_款式_{item}_的产量_{sum_item_date_production}_超过日上限_{self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]}")
-                        return False
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_ITEM_MAX]:
+            # 款式日产能上限
+            for item in self.data[SetName.ITEM_LIST]:
+                if self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item] > 0:
+                    for date in self.data[SetName.ITEM_TIME_DICT][item]:
+                        sum_item_date_production = \
+                            sum(self.result[ResultName.ORDER_MACHINE_DATE].get((order, machine, date), 0) for order in
+                                self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                                for machine in self.data[SetName.MACHINE_BY_ORDER_DICT][order]
+                                )
+                        if sum_item_date_production > self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]:
+                            logger.info(
+                                f"{date}_款式_{item}_的产量_{sum_item_date_production}_超过日上限_{self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]}")
+                            return False
 
         # 供应商日产能上限
         for supplier in self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT]:
