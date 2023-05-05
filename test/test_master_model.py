@@ -161,27 +161,17 @@ class TestMasterModel:
             for month in self.data[SetName.ITEM_MONTH_DICT][item]:
                 for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]:
                     if (order, self.supplier, month) in self.vars[VarName.HAT_Z]:
-                        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
-                            # supplimentary_2-1.1
-                            self.model.addConstr(
-                                self.vars[VarName.HAT_Z][order, self.supplier, month] <=
-                                sum(min(item_max_occupy,
-                                        self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][self.supplier].get(date,
-                                                                                                             self.data[
-                                                                                                                 ParaName.MAX_QUANTITY]))
-                                    for date in self.data[SetName.ORDER_TIME_DICT][order] if
-                                    self.data[ParaName.MONTH_BY_TIME_DICT][date] == month)
-                            )
-                        else:
-                            # supplimentary_2-1.1
-                            self.model.addConstr(
-                                self.vars[VarName.HAT_Z][order, self.supplier, month] <=
-                                sum(min(item_max_occupy,
-                                        self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier].get(date,
-                                                                                                                  self.data[ParaName.MAX_QUANTITY]))
-                                    for date in self.data[SetName.ORDER_TIME_DICT][order] if
-                                    date[:7] == month)
-                            )
+                        # supplimentary_2-1.1
+                        self.model.addConstr(
+                            self.vars[VarName.HAT_Z][order, self.supplier, month] <=
+                            sum(min(item_max_occupy,
+                                    self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][self.supplier].get(date,
+                                                                                                         self.data[
+                                                                                                             ParaName.MAX_QUANTITY]))
+                                for date in self.data[SetName.ORDER_TIME_DICT][order] if
+                                self.data[ParaName.MONTH_BY_TIME_DICT][date] == month)
+                        )
+
                         # supplimentary_2-1.2
                         # self.model.addConstr(self.vars[VarName.HAT_Z][order, supplier, month] <= sum(
                         #                      self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
@@ -195,30 +185,17 @@ class TestMasterModel:
         for item in self.data[SetName.ITEM_LIST]:
             item_max_occupy = self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item]
             for month in self.data[SetName.ITEM_MONTH_DICT][item]:
-
-                if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
-                    # supplimentary_2-2.1
-                    self.model.addConstr(
-                        gp.quicksum(self.vars[VarName.HAT_Z][order, self.supplier, month]
-                                    for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                                    if (order, self.supplier, month) in self.vars[VarName.HAT_Z]) <=
-                        sum(min(item_max_occupy,
-                                self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][self.supplier].get(date,
-                                                                                                     self.data[
-                                                                                                         ParaName.MAX_QUANTITY]))
-                            for date in self.data[SetName.ITEM_TIME_DICT][item] if
-                            self.data[ParaName.MONTH_BY_TIME_DICT][date] == month))
-                else:
-                    # supplimentary_2-2.1
-                    self.model.addConstr(
-                       gp.quicksum(self.vars[VarName.HAT_Z][order, self.supplier, month]
-                                          for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                                          if (order, self.supplier, month) in self.vars[VarName.HAT_Z]) <=
-                        sum(min(item_max_occupy,
-                                self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][self.supplier].get(date,
-                                                                                                     self.data[ParaName.MAX_QUANTITY]))
-                            for date in self.data[SetName.ITEM_TIME_DICT][item] if
-                            date[:7] == month))
+                # supplimentary_2-2.1
+                self.model.addConstr(
+                    gp.quicksum(self.vars[VarName.HAT_Z][order, self.supplier, month]
+                                for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                                if (order, self.supplier, month) in self.vars[VarName.HAT_Z]) <=
+                    sum(min(item_max_occupy,
+                            self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][self.supplier].get(date,
+                                                                                                 self.data[
+                                                                                                     ParaName.MAX_QUANTITY]))
+                        for date in self.data[SetName.ITEM_TIME_DICT][item] if
+                        self.data[ParaName.MONTH_BY_TIME_DICT][date] == month))
                 # supplimentary_2-2.2
                 self.model.addConstr(
                    gp.quicksum(self.vars[VarName.HAT_Z][order, self.supplier, month]
@@ -234,30 +211,17 @@ class TestMasterModel:
         # supplimentary_2-3 对于供应商而言，月产量 <= min(实体供应商日上限，sum(款式日上限)，产线月上限)
         for supplier in self.data[SetName.SUPPLIER_LIST]:
             for month in self.data[SetName.TIME_MONTH_LIST]:
-                if ParamsMark.ALL_PARAMS_DICT[ParamsMark.IS_RANDOM_DATA]:
-                    # supplimentary_2-3.1
-                    self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                                     for item in
-                                                     self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
-                                                     for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                                                     if (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
-                                         gp.quicksum(
-                                             self.vars[VarName.KAPPA][supplier, date]
-                                             for date in self.data[SetName.TIME_BY_MONTH_DICT][month] if
-                                             self.data[ParaName.MONTH_BY_TIME_DICT][date] == month and (supplier, date) in self.vars[VarName.KAPPA])
-                                         )
-                else:
-                    # supplimentary_2-3.1
-                    self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                                           for item in
-                                                           self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
-                                                           for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                                                           if (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
-                                        gp.quicksum(
-                                             self.vars[VarName.KAPPA][supplier, date]
-                                             for date in self.data[SetName.TIME_BY_MONTH_DICT][month] if
-                                             date[:7] == month and (supplier, date) in self.vars[VarName.KAPPA])
-                                         )
+                # supplimentary_2-3.1
+                self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                                                 for item in
+                                                 self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]
+                                                 for order in self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                                                 if (order, supplier, month) in self.vars[VarName.HAT_Z]) <=
+                                     gp.quicksum(
+                                         self.vars[VarName.KAPPA][supplier, date]
+                                         for date in self.data[SetName.TIME_BY_MONTH_DICT][month] if
+                                         self.data[ParaName.MONTH_BY_TIME_DICT][date] == month and (supplier, date) in self.vars[VarName.KAPPA])
+                                     )
 
                 # supplimentary_2-3.2
                 self.model.addConstr(gp.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]

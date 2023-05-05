@@ -87,6 +87,7 @@ class FeaturePrepareSemir:
         self.data[SetName.TIME_LIST] = date_str_list
         self.data[SetName.TIME_MONTH_LIST] = []
         self.data[SetName.TIME_BY_MONTH_DICT] = {}
+        self.data[ParaName.MONTH_BY_TIME_DICT] = {}
         for date_str in date_str_list:
             month_str = date_str[:7]
             if month_str not in self.data[SetName.TIME_BY_MONTH_DICT]:
@@ -94,7 +95,7 @@ class FeaturePrepareSemir:
                 self.data[SetName.TIME_BY_MONTH_DICT][month_str] = [date_str]
             else:
                 self.data[SetName.TIME_BY_MONTH_DICT][month_str].append(date_str)
-
+            self.data[ParaName.MONTH_BY_TIME_DICT][date_str] = month_str
     def gen_machine_sets(self):
         """
         处理产线集合
