@@ -192,135 +192,40 @@ class RelaxedMasterModel:
                                                  (machine, month), 0)
                                              for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
                                          ))
-        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 0:
-            # supplimentary_2-4 对于具有交叉可用machine的情况而言，集合a内部的产量<= 集合a对应machine月产能
-            for supplier in self.data[SetName.SUPPLIER_LIST]:
-                for month in self.data[SetName.TIME_MONTH_LIST]:
-                    for idx in range(len(self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier])):
-                        machine_subset = self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier][idx]
-                        item_subset = self.data[SetName.ITEM_SUB_SETS_BY_SUPPLIER_DICT][supplier][idx]
-                        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
-                            self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                                                   for item in item_subset
-                                                                   for order in
-                                                                   self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                                                                   if (order, supplier, month) in self.vars[
-                                                                       VarName.HAT_Z]) <=
-                                                 gurobipy.quicksum(
-                                                     self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
-                                                         (machine, month), 0)
-                                                     * self.vars[VarName.NU][machine, month]
-                                                     for machine in machine_subset
-                                                     if (machine, month) in self.vars[VarName.NU]
-                                                 ))
-                        else:
-                            self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                                                   for item in item_subset
-                                                                   for order in
-                                                                   self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                                                                   if (order, supplier, month) in self.vars[
-                                                                       VarName.HAT_Z]) <=
-                                                 gurobipy.quicksum(
-                                                     self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
-                                                         (machine, month), 0)
-                                                     for machine in machine_subset
-                                                 ))
-        elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 1:
-            # supplimentary_2-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
-            for supplier in self.data[SetName.SUPPLIER_LIST]:
-                for channel in self.data[SetName.CHANNEL_LIST]:
-                    for month in self.data[SetName.TIME_MONTH_LIST]:
-                        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
-                            self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                                                   for item in
-                                                                   set.intersection(set(
-                                                                       self.data[SetName.ITEM_BY_SUPPLIER_DICT][
-                                                                           supplier]),
-                                                                       set(self.data[
-                                                                               SetName.ITEM_BY_CHANNEL_DICT][
-                                                                               channel]))
-                                                                   for order in
-                                                                   self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                                                                   if (order, supplier, month) in self.vars[
-                                                                       VarName.HAT_Z]) <=
-                                                 gurobipy.quicksum(
-                                                     self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
-                                                         (machine, month), 0)
-                                                     * self.vars[VarName.NU][machine, month]
-                                                     for machine in set.intersection(
-                                                         set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
-                                                         set(self.data[SetName.MACHINE_BY_CHANNEL_DICT][channel]))
-                                                     if (machine, month) in self.vars[VarName.NU]
-                                                 ))
-                        else:
-                            self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                                                   for item in
-                                                                   set.intersection(set(
-                                                                       self.data[SetName.ITEM_BY_SUPPLIER_DICT][
-                                                                           supplier]),
-                                                                       set(self.data[
-                                                                               SetName.ITEM_BY_CHANNEL_DICT][
-                                                                               channel]))
-                                                                   for order in
-                                                                   self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                                                                   if (order, supplier, month) in self.vars[
-                                                                       VarName.HAT_Z]) <=
-                                                 sum(
-                                                     self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
-                                                         (machine, month), 0)
-                                                     for machine in set.intersection(
-                                                         set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]),
-                                                         set(self.data[SetName.MACHINE_BY_CHANNEL_DICT][channel]))
-                                                 ))
-        elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 2:
-            # supplimentary_2-4 对于算法供应商而言，相同channel的算法供应商对应可生产需求月产量<= 月产能
-            for supplier in self.data[SetName.SUPPLIER_LIST]:
-                for label in self.data[SetName.LABEL_LIST]:
-                        for month in self.data[SetName.TIME_MONTH_LIST]:
-                            if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
-                                self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                                                       for item in
-                                                                       set.intersection(set(
-                                                                           self.data[SetName.ITEM_BY_SUPPLIER_DICT][
-                                                                               supplier]),
-                                                                           set(self.data[
-                                                                                   SetName.ITEM_BY_LABEL_DICT][
-                                                                                   label[0], label[1], label[2]]))
-                                                                       for order in
-                                                                       self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                                                                       if (order, supplier, month) in self.vars[
-                                                                           VarName.HAT_Z]) <=
-                                                     gurobipy.quicksum(
-                                                         self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
-                                                             (machine, month), 0)
-                                                         * self.vars[VarName.NU][machine, month]
-                                                         for machine in set.intersection(
-                                                             set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][
-                                                                     supplier]),
-                                                             set(self.data[SetName.MACHINE_BY_LABEL_DICT][label[0], label[1], label[2]]))
-                                                         if (machine, month) in self.vars[VarName.NU]
-                                                     ))
-                            else:
-                                self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
-                                                                       for item in
-                                                                       set.intersection(set(
-                                                                           self.data[SetName.ITEM_BY_SUPPLIER_DICT][
-                                                                               supplier]),
-                                                                           set(self.data[
-                                                                                   SetName.ITEM_BY_LABEL_DICT][
-                                                                                   label[0], label[1], label[2]]))
-                                                                       for order in
-                                                                       self.data[SetName.ORDER_BY_ITEM_DICT][item]
-                                                                       if (order, supplier, month) in self.vars[
-                                                                           VarName.HAT_Z]) <=
-                                                     sum(
-                                                         self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
-                                                             (machine, month), 0)
-                                                         for machine in set.intersection(
-                                                             set(self.data[SetName.MACHINE_BY_SUPPLIER_DICT][
-                                                                     supplier]),
-                                                             set(self.data[SetName.MACHINE_BY_LABEL_DICT][label[0], label[1], label[2]]))
-                                                     ))
+
+        # supplimentary_2-4 对于具有交叉可用machine的情况而言，集合a内部的产量<= 集合a对应machine月产能
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
+            for month in self.data[SetName.TIME_MONTH_LIST]:
+                for idx in range(len(self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier])):
+                    machine_subset = self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier][idx]
+                    item_subset = self.data[SetName.ITEM_SUB_SETS_BY_SUPPLIER_DICT][supplier][idx]
+                    if ParamsMark.ALL_PARAMS_DICT[ParamsMark.NU_VAR]:
+                        self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                                                               for item in item_subset
+                                                               for order in
+                                                               self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                                                               if (order, supplier, month) in self.vars[
+                                                                   VarName.HAT_Z]) <=
+                                             gurobipy.quicksum(
+                                                 self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
+                                                     (machine, month), 0)
+                                                 * self.vars[VarName.NU][machine, month]
+                                                 for machine in machine_subset
+                                                 if (machine, month) in self.vars[VarName.NU]
+                                             ))
+                    else:
+                        self.model.addConstr(gurobipy.quicksum(self.vars[VarName.HAT_Z][order, supplier, month]
+                                                               for item in item_subset
+                                                               for order in
+                                                               self.data[SetName.ORDER_BY_ITEM_DICT][item]
+                                                               if (order, supplier, month) in self.vars[
+                                                                   VarName.HAT_Z]) <=
+                                             gurobipy.quicksum(
+                                                 self.data[ParaName.MACHINE_MONTH_MAX_PRODUCTION_DICT].get(
+                                                     (machine, month), 0)
+                                                 for machine in machine_subset
+                                             ))
+
 
     def add_nu(self):
         # =============

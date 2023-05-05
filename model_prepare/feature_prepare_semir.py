@@ -25,7 +25,7 @@ class FeaturePrepareSemir:
         self.gen_model_params()
         self.gen_match_sets_and_params()
         self.filter_data()
-        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0 and ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 0:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0:
             self.gen_sub_item_machine_sets()
         self.gen_model_coefficients()
         self.print_model_info()
@@ -349,95 +349,9 @@ class FeaturePrepareSemir:
             possible_supplier = []
             possible_machine = []
             item_order_list = self.data[SetName.ORDER_BY_ITEM_DICT].get(item, [])
-            if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 0:
-                # 每个款式的可用产能不同
-                if self.data[ParaName.ITEM_SHARE_LEVEL_DICT][item] == 1:
-                    # 按照渠道分
-                    possible_supplier = [supplier
-                                         for supplier in self.data[SetName.SUPPLIER_LIST]
-                                         if len(list(
-                            machine for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-                            if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] == machine_label_dict[machine][
-                                MachineHeader.FABRIC_CATEGORY]
-                            and machine_label_dict[machine][
-                                MachineHeader.BRAND] == item_label_dict[item][ItemHeader.BRAND]
-                            and machine_label_dict[machine][
-                                MachineHeader.CHANNEL] == item_label_dict[item][ItemHeader.CHANNEL])) > 0]
-                    possible_machine = [machine
-                                        for supplier in possible_supplier
-                                        for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-                                        if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] ==
-                                        machine_label_dict[machine][
-                                            MachineHeader.FABRIC_CATEGORY]
-                                        and machine_label_dict[machine][
-                                            MachineHeader.BRAND] == item_label_dict[item][ItemHeader.BRAND]
-                                        and machine_label_dict[machine][
-                                            MachineHeader.CHANNEL] == item_label_dict[item][ItemHeader.CHANNEL]
-                                        ]
-                elif self.data[ParaName.ITEM_SHARE_LEVEL_DICT][item] == 2:
-                    # 按照item_category&渠道&agegroup 分
-                    possible_supplier = [supplier
-                                         for supplier in self.data[SetName.SUPPLIER_LIST]
-                                         if len(list(
-                            machine for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-                            if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] == machine_label_dict[machine][
-                                MachineHeader.FABRIC_CATEGORY]
-                            and machine_label_dict[machine][
-                                MachineHeader.BRAND] == item_label_dict[item][ItemHeader.BRAND]
-                            and machine_label_dict[machine][
-                                MachineHeader.CHANNEL] == item_label_dict[item][ItemHeader.CHANNEL]
-                            and machine_label_dict[machine][
-                                MachineHeader.AGE_GROUP] == item_label_dict[item][ItemHeader.AGE_GROUP]
-                            and machine_label_dict[machine][
-                                MachineHeader.ITEM_CAPACITY_GROUP] == item_label_dict[item][
-                                ItemHeader.ITEM_CAPACITY_GROUP])) > 0]
 
-                    possible_machine = [machine
-                                        for supplier in possible_supplier
-                                        for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-                                        if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] ==
-                                        machine_label_dict[machine][
-                                            MachineHeader.FABRIC_CATEGORY]
-                                        and machine_label_dict[machine][
-                                            MachineHeader.BRAND] == item_label_dict[item][ItemHeader.BRAND]
-                                        and machine_label_dict[machine][
-                                            MachineHeader.CHANNEL] == item_label_dict[item][ItemHeader.CHANNEL]
-                                        and machine_label_dict[machine][
-                                            MachineHeader.AGE_GROUP] == item_label_dict[item][ItemHeader.AGE_GROUP]
-                                        and machine_label_dict[machine][
-                                            MachineHeader.ITEM_CAPACITY_GROUP] == item_label_dict[item][
-                                            ItemHeader.ITEM_CAPACITY_GROUP]]
-                else:
-                    # 按照渠道&agegroup 分
-                    possible_supplier = [supplier
-                                         for supplier in self.data[SetName.SUPPLIER_LIST]
-                                         if len(list(
-                            machine for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-                            if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] == machine_label_dict[machine][
-                                MachineHeader.FABRIC_CATEGORY]
-                            and machine_label_dict[machine][
-                                MachineHeader.BRAND] == item_label_dict[item][ItemHeader.BRAND]
-                            and machine_label_dict[machine][
-                                MachineHeader.CHANNEL] == item_label_dict[item][ItemHeader.CHANNEL]
-                            and machine_label_dict[machine][
-                                MachineHeader.AGE_GROUP] == item_label_dict[item][ItemHeader.AGE_GROUP]
-                           )) > 0]
-
-                    possible_machine = [machine
-                                        for supplier in possible_supplier
-                                        for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-                                        if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] ==
-                                        machine_label_dict[machine][
-                                            MachineHeader.FABRIC_CATEGORY]
-                                        and machine_label_dict[machine][
-                                            MachineHeader.BRAND] == item_label_dict[item][ItemHeader.BRAND]
-                                        and machine_label_dict[machine][
-                                            MachineHeader.CHANNEL] == item_label_dict[item][ItemHeader.CHANNEL]
-                                        and machine_label_dict[machine][
-                                            MachineHeader.AGE_GROUP] == item_label_dict[item][ItemHeader.AGE_GROUP]
-                                        ]
-            # 按订单-款-实体-算法匹配私有产能的可用供应商、产线
-            elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 1:
+            # 每个款式的可用产能不同
+            if self.data[ParaName.ITEM_SHARE_LEVEL_DICT][item] == 1:
                 # 按照渠道分
                 possible_supplier = [supplier
                                      for supplier in self.data[SetName.SUPPLIER_LIST]
@@ -452,15 +366,16 @@ class FeaturePrepareSemir:
                 possible_machine = [machine
                                     for supplier in possible_supplier
                                     for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-                                    if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] == machine_label_dict[machine][
+                                    if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] ==
+                                    machine_label_dict[machine][
                                         MachineHeader.FABRIC_CATEGORY]
                                     and machine_label_dict[machine][
                                         MachineHeader.BRAND] == item_label_dict[item][ItemHeader.BRAND]
                                     and machine_label_dict[machine][
                                         MachineHeader.CHANNEL] == item_label_dict[item][ItemHeader.CHANNEL]
                                     ]
-            elif ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 2:
-                # 按照item_category和渠道分
+            elif self.data[ParaName.ITEM_SHARE_LEVEL_DICT][item] == 2:
+                # 按照item_category&渠道&agegroup 分
                 possible_supplier = [supplier
                                      for supplier in self.data[SetName.SUPPLIER_LIST]
                                      if len(list(
@@ -474,12 +389,14 @@ class FeaturePrepareSemir:
                         and machine_label_dict[machine][
                             MachineHeader.AGE_GROUP] == item_label_dict[item][ItemHeader.AGE_GROUP]
                         and machine_label_dict[machine][
-                            MachineHeader.ITEM_CAPACITY_GROUP] == item_label_dict[item][ItemHeader.ITEM_CAPACITY_GROUP])) > 0]
+                            MachineHeader.ITEM_CAPACITY_GROUP] == item_label_dict[item][
+                            ItemHeader.ITEM_CAPACITY_GROUP])) > 0]
 
                 possible_machine = [machine
                                     for supplier in possible_supplier
                                     for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-                                    if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] == machine_label_dict[machine][
+                                    if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] ==
+                                    machine_label_dict[machine][
                                         MachineHeader.FABRIC_CATEGORY]
                                     and machine_label_dict[machine][
                                         MachineHeader.BRAND] == item_label_dict[item][ItemHeader.BRAND]
@@ -490,7 +407,35 @@ class FeaturePrepareSemir:
                                     and machine_label_dict[machine][
                                         MachineHeader.ITEM_CAPACITY_GROUP] == item_label_dict[item][
                                         ItemHeader.ITEM_CAPACITY_GROUP]]
+            else:
+                # 按照渠道&agegroup 分
+                possible_supplier = [supplier
+                                     for supplier in self.data[SetName.SUPPLIER_LIST]
+                                     if len(list(
+                        machine for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+                        if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] == machine_label_dict[machine][
+                            MachineHeader.FABRIC_CATEGORY]
+                        and machine_label_dict[machine][
+                            MachineHeader.BRAND] == item_label_dict[item][ItemHeader.BRAND]
+                        and machine_label_dict[machine][
+                            MachineHeader.CHANNEL] == item_label_dict[item][ItemHeader.CHANNEL]
+                        and machine_label_dict[machine][
+                            MachineHeader.AGE_GROUP] == item_label_dict[item][ItemHeader.AGE_GROUP]
+                       )) > 0]
 
+                possible_machine = [machine
+                                    for supplier in possible_supplier
+                                    for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+                                    if item_label_dict[item][ItemHeader.FABRIC_CATEGORY] ==
+                                    machine_label_dict[machine][
+                                        MachineHeader.FABRIC_CATEGORY]
+                                    and machine_label_dict[machine][
+                                        MachineHeader.BRAND] == item_label_dict[item][ItemHeader.BRAND]
+                                    and machine_label_dict[machine][
+                                        MachineHeader.CHANNEL] == item_label_dict[item][ItemHeader.CHANNEL]
+                                    and machine_label_dict[machine][
+                                        MachineHeader.AGE_GROUP] == item_label_dict[item][ItemHeader.AGE_GROUP]
+                                    ]
             self.data[SetName.SUPPLIER_BY_ITEM_DICT][item] = possible_supplier
             for supplier in possible_supplier:
                 if supplier in self.data[SetName.ITEM_BY_SUPPLIER_DICT]:

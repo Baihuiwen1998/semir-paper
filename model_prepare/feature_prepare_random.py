@@ -25,7 +25,7 @@ class FeaturePrepareRandom:
         self.gen_model_params()
         self.gen_match_sets_and_params()
         self.filter_data()
-        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0 and ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 0:
+        if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] > 0:
             self.gen_sub_item_machine_sets()
         self.gen_model_coefficients()
         self.print_model_info()
@@ -297,22 +297,20 @@ class FeaturePrepareRandom:
             possible_supplier = []
             possible_machine = []
             item_order_list = self.data[SetName.ORDER_BY_ITEM_DICT].get(item, [])
-            if ParamsMark.ALL_PARAMS_DICT[ParamsMark.SHARE_LEVEL] == 0:
-                possible_supplier = [supplier
-                                     for supplier in self.data[SetName.SUPPLIER_LIST]
-                                     if len(list(
-                        machine for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-                        if self.data[ParaName.MACHINE_TYPE_DICT][machine] in \
-                        self.data[SetName.ELIGIBLE_MACHINE_TYPE_SET_BY_ITEM_DICT][item])
-                    )]
 
+            possible_supplier = [supplier
+                                 for supplier in self.data[SetName.SUPPLIER_LIST]
+                                 if len(list(
+                    machine for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+                    if self.data[ParaName.MACHINE_TYPE_DICT][machine] in \
+                    self.data[SetName.ELIGIBLE_MACHINE_TYPE_SET_BY_ITEM_DICT][item])
+                )]
 
-
-                possible_machine = [machine
-                                    for supplier in possible_supplier
-                                    for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
-                                    if self.data[ParaName.MACHINE_TYPE_DICT][machine] in
-                                    self.data[SetName.ELIGIBLE_MACHINE_TYPE_SET_BY_ITEM_DICT][item]]
+            possible_machine = [machine
+                                for supplier in possible_supplier
+                                for machine in self.data[SetName.MACHINE_BY_SUPPLIER_DICT][supplier]
+                                if self.data[ParaName.MACHINE_TYPE_DICT][machine] in
+                                self.data[SetName.ELIGIBLE_MACHINE_TYPE_SET_BY_ITEM_DICT][item]]
 
             self.data[SetName.SUPPLIER_BY_ITEM_DICT][item] = possible_supplier
             for supplier in possible_supplier:

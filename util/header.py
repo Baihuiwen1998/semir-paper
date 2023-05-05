@@ -69,7 +69,6 @@ class ImportanceMark:
 class ParamsMark:
     MAX_ITERATION = 'max_iter'             # 最大迭代次数
     MAX_RUNTIME = 'max_runtime'                 # 最长的求解时间
-    SHARE_LEVEL = 'share_level'                 # 产线的产能共用水平，0-存在可用产线集合的交集，1-按照channel区分，2-按照channel-age-group区分
     CAPACITY_AVERAGE_OBJ = 'capacity_average_obj'   # 是否启动供应商均衡目标函数
     CAPACITY_LADDEL_OBJ = 'capacity_ladder_obj'     # 是否启动供应商池成阶梯目标函数
     NU_VAR = 'nu_var'                               # 是否启用变量nu
@@ -82,10 +81,8 @@ class ParamsMark:
     IS_RANDOM_DATA = 'is_random_data'                       # 算例为semir真实数据or抽样数据or随机数据
     IS_POOL = 'is_pool'                                     # 是否考虑供应商分池内部均衡
     IS_Z_OPT = 'is_z_opt'                                   # 是否采用z_opt变量
-    IS_ITEM_MAX = 'is_item_max'                             # 是否考虑款日生产上限
     ALL_PARAMS_DICT = {MAX_ITERATION: 500,
                        MAX_RUNTIME: 3600,
-                       SHARE_LEVEL: 0,
                        CAPACITY_AVERAGE_OBJ: True,
                        CAPACITY_LADDEL_OBJ: False,
                        NU_VAR: False,
@@ -97,8 +94,7 @@ class ParamsMark:
                        IS_LIFT: False,
                        IS_RANDOM_DATA: True,
                        IS_POOL: False,
-                       IS_Z_OPT: False,
-                       IS_ITEM_MAX: False
+                       IS_Z_OPT: False
                        }
 
 
