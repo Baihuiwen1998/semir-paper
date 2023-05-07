@@ -5,7 +5,10 @@ from config import *
 from model_prepare.data_prepare import DataPrepare
 from model_prepare.feature_prepare_random import FeaturePrepareRandom
 from model_prepare.feature_prepare_semir import FeaturePrepareSemir
+from test_master_model import TestMasterModel
 from test_relaxed_sub_model import TestRelaxedSubModel
+from util.header import ParamsMark
+
 # from test_master_model import TestMasterModel
 
 formatter = '%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
@@ -25,10 +28,11 @@ def cal_sub_data(data, supplier, item_list):
 
 
 def main():
+    ParamsMark.ALL_PARAMS_DICT[ParamsMark.SOLUTION_MODE] = 1
     ori_dir = "/Users/emmabai/PycharmProjects/semir-paper/"
     input_dir = ori_dir+"data/input/random_data/"
     output_dir = ori_dir+"data/output/"
-    file = 'Set_4/' + '3/'
+    file = 'Set_7/' + '1/'
 
     input_file_dir = os.path.join(input_dir, file)
 
@@ -44,8 +48,8 @@ def main():
     # 特征处理
     fp = FeaturePrepareRandom(data, file)
     data = fp.prepare()
-    supplier = 9
-    item_list = [28, 38]
+    supplier = 5
+    item_list = [53, 80, 91]# , 105]
     sub_data = cal_sub_data(data, supplier, item_list)
     sub_model = TestRelaxedSubModel(data, sub_data)
     sub_model.construct()
@@ -86,9 +90,9 @@ def main():
     #     if 6 in data[DAOptSetName.MACHINE_BY_CHANNEL_DICT][channel]:
     #         print(channel)
 
-    # master_model = TestMasterModel(data, supplier, item_list)
-    # master_model.construct()
-    # master_model.solve()
+    master_model = TestMasterModel(data, supplier, item_list)
+    master_model.construct()
+    master_model.solve_lbbd()
 
 if __name__ == '__main__':
     main()

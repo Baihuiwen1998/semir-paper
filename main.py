@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 def main():
 
     ori_dir = os.getcwd()
-    input_dir = ori_dir+"/data/input/synthetic_data/"
-    file_name = 'C/C_1_uat_1_full_梭织/'
+    input_dir = ori_dir+"/data/input/hard_cases/"
+    file_name = 'C/C_7_uat_1_full_针织/'
 
     # 数据处理
     dp = DataPrepare(input_dir, file_name)

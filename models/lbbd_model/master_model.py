@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 def my_call_back(model, where):
     if where == gp.GRB.Callback.MIPSOL:
+        # print(model._counter)
         # best_obj = model.cbGet(gp.GRB.Callback.MIPSOL_OBJBST)
         # obj_bnd = model.cbGet(gp.GRB.Callback.MIPSOL_OBJBND)
         # if (best_obj- obj_bnd)/ best_obj < 0.5:
@@ -29,11 +30,11 @@ def my_call_back(model, where):
             is_feasible = sub_model.solve(mode=1)
             if not is_feasible:
                 # 不可行
-                logger.info("!!!!!!!!!" + "供应商：" + str(supplier)+"origin item list")
-                print('[', end='')
-                for item in sub_data[LBBDSubDataName.ITEM_LIST]:
-                    print(str(item), end=',')
-                print(']')
+                # logger.info("!!!!!!!!!" + "供应商：" + str(supplier)+"origin item list")
+                # print('[', end='')
+                # for item in sub_data[LBBDSubDataName.ITEM_LIST]:
+                #     print(str(item), end=',')
+                # print(']')
                 # 调用寻找benders cut函数
                 for direction in [False]: #, True]:
                     item_list, mis_size = GLOBALDATA.ALL_GLOBAL_DATA_DICT[GLOBALDATA.CUT_GENERATOR].generate_mis(sub_model, direction)
@@ -116,6 +117,12 @@ class MasterModel:
                 for supplier in self.data[SetName.SUPPLIER_LIST]
                 for date in self.data[SetName.TIME_LIST]}
 
+            logger.info('添加变量：松弛子问题辅助变量sigma_o1_o2_p_\hat_t')
+            self.vars[VarName.SIGMA] = {(order_1, order_2, supplier, month): self.model.addVar(
+                name=var_name_regularizer(f'V_{VarName.SIGMA}({order_1}_{order_2}_{supplier}_{month})'),
+                vtype=gp.GRB.CONTINUOUS)
+                for (order_1, supplier, month) in self.data[SetName.UNCOVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT]
+                for order_2 in self.data[SetName.UNCOVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT][order_1, supplier, month]}
 
 
     def add_z_ost_constrains(self):
@@ -324,6 +331,68 @@ class MasterModel:
                                              for machine in machine_subset
                                          ))
 
+        # supplimentary_2-5 对于order-supplier-order_set-month而言，生产时间范围内的min（款式，supplier）日产能
+        for (order_1, supplier, month) in self.data[SetName.UNCOVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT]:
+            orders_2_by_item_dict = dict()
+            dates_by_item_dict = dict()
+            for order_2 in self.data[SetName.UNCOVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT][order_1, supplier, month]:
+                item_2 = self.data[ParaName.ORDER_ITEM_DICT][order_2]
+                dates_left_over = set(self.data[SetName.TIME_BY_ORDER_MONTH_DICT][order_2, month]) - set(
+                    self.data[SetName.TIME_BY_ORDER_MONTH_DICT][order_1, month])
+                capacity_by_supplier = 0
+                for date in dates_left_over:
+                    capacity_by_supplier += min(self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item_2],
+                                                self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier].get(date,self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item_2]))
+                self.model.addConstr(self.vars[VarName.SIGMA][order_1, order_2, supplier, month] >= 0)
+                self.model.addConstr(self.vars[VarName.SIGMA][order_1, order_2, supplier, month] >= self.vars[VarName.HAT_Z][order_2, supplier, month] -
+                                     capacity_by_supplier)
+                self.model.addConstr(
+                    self.vars[VarName.SIGMA][order_1, order_2, supplier, month] <= self.vars[VarName.HAT_Z][
+                        order_2, supplier, month])
+
+                if item_2 not in orders_2_by_item_dict:
+                    orders_2_by_item_dict[item_2] = set()
+                    dates_by_item_dict[item_2] = set()
+                orders_2_by_item_dict[item_2].add(order_2)
+                dates_by_item_dict[item_2] = dates_by_item_dict[item_2].union(dates_left_over)
+
+            self.model.addConstr(gp.quicksum(self.vars[VarName.SIGMA][order_1, order_2, supplier, month]
+                                             for order_2 in self.data[SetName.UNCOVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT][order_1, supplier, month]) +
+                                 gp.quicksum(self.vars[VarName.HAT_Z][order_2, supplier, month]
+                                             for order_2 in self.data[SetName.COVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT][order_1, supplier, month])
+                                 <= gp.quicksum(
+                                         self.vars[VarName.KAPPA][supplier, date]
+                                         for date in self.data[SetName.TIME_BY_ORDER_MONTH_DICT][order_1, month]
+                                 ))
+
+            self.model.addConstr(gp.quicksum(self.vars[VarName.SIGMA][order_1, order_2, supplier, month]
+                                             for order_2 in
+                                             self.data[SetName.UNCOVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT][
+                                                 order_1, supplier, month]) +
+                                 gp.quicksum(self.vars[VarName.HAT_Z][order_2, supplier, month]
+                                             for order_2 in
+                                             self.data[SetName.COVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT][
+                                                 order_1, supplier, month])
+                                 >= gp.quicksum(self.vars[VarName.HAT_Z][order_2, supplier, month] for order_2 in self.data[SetName.UNCOVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT][
+                                                 order_1, supplier, month].union(self.data[SetName.COVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT][
+                                                 order_1, supplier, month])) - gp.quicksum(
+                                         self.vars[VarName.KAPPA][supplier, date]
+                                         for date in (set(self.data[SetName.TIME_BY_MONTH_DICT][month])-self.data[SetName.TIME_BY_ORDER_MONTH_DICT][order_1, month])
+                                        if (supplier, date) in self.vars[VarName.KAPPA]
+                                 ))
+
+            for item_2 in orders_2_by_item_dict:
+                capacity_by_supplier = 0
+                for date in dates_by_item_dict[item_2]:
+                    capacity_by_supplier += min(self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item_2],
+                                                self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier].get(date, self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item_2]))
+                self.model.addConstr(gp.quicksum(self.vars[VarName.SIGMA][order_1, order_2, supplier, month]
+                                             for order_2 in orders_2_by_item_dict[item_2]) +
+                                     gp.quicksum(self.vars[VarName.HAT_Z][order_2, supplier, month]
+                                             for order_2 in self.data[SetName.COVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT][order_1, supplier, month]
+                                                 if self.data[ParaName.ORDER_ITEM_DICT][order_2] == item_2)
+                                     >= gp.quicksum(self.vars[VarName.HAT_Z][order_2, supplier, month] for order_2 in orders_2_by_item_dict[item_2]) - capacity_by_supplier)
+
 
 
     def add_relaxed_sub_constrains(self):
@@ -471,7 +540,7 @@ class MasterModel:
         # 款式内订单延误
         # =============
         logger.info('模型添加优化目标：订单延误最少')
-        order_delay_obj =gp.quicksum(
+        order_delay_obj = gp.quicksum(
             (self.data[ObjCoeffName.ORDER_DELAY_BASE_PUNISH]
              + self.data[ObjCoeffName.ORDER_DELAY_PUNISH] * self.data[ParaName.ORDER_QUANTITY_DICT][
                  order]) *

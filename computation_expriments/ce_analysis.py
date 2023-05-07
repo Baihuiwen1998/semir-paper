@@ -129,6 +129,6 @@ class ModelAnalysis:
             # 池内的最大和最小产能规划达成率 和平均达成率
             for pool in self.result[ResultName.POOL_CAPACITY_RATIO_AVG]:
                 logger.info(f"{pool}_的平均产能规划达成率为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_AVG][pool], '.4f')}")
-                finished_rate_list.append(f"{pool}_的平均产能规划达成率为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_AVG][pool], '.4f')}")
+                # finished_rate_list.append(f"{pool}_的平均产能规划达成率为_{format(self.result[ResultName.POOL_CAPACITY_RATIO_AVG][pool], '.4f')}")
 
         return True, finished_rate_list

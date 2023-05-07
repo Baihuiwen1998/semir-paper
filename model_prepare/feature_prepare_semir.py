@@ -662,5 +662,44 @@ class FeaturePrepareSemir:
             self.data[SetName.MACHINE_SUB_SETS_BY_SUPPLIER_DICT][supplier] = machine_sub_sets_list
             self.data[SetName.ITEM_SUB_SETS_BY_SUPPLIER_DICT][supplier] = item_sub_sets_list
 
+        logger.info("生成订单-供应商-月份-订单对应集合")
+        self.data[SetName.UNCOVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT] = dict()
+        orders_def_0_by_order_supplier_month_dict = dict()
+        orders_not_covered_list_by_order_supplier_month_dict = dict()
+        orders_covered_list_by_order_supplier_month_dict = dict()
+
+        cnt_variable_num = 0
+        date_index_dict = {v: k for k, v in enumerate(self.data[SetName.TIME_LIST])}
+        for supplier in self.data[SetName.SUPPLIER_LIST]:
+            visited_date_sets_binary = set()
+            for item_1 in self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]:
+                for order_1 in self.data[SetName.ORDER_BY_ITEM_DICT][item_1]:
+                    for month in self.data[SetName.ORDER_TIME_MONTH_DICT][order_1]:
+                        orders_not_covered_list_by_order_supplier_month_dict[order_1, supplier, month] = set()
+                        orders_covered_list_by_order_supplier_month_dict[order_1, supplier, month] = set()
+                        orders_def_0_by_order_supplier_month_dict[order_1, supplier, month] = set()
+                        date_set_binary = 0
+                        for date in self.data[SetName.TIME_BY_ORDER_MONTH_DICT][order_1, month]:
+                            date_set_binary = date_set_binary | (1 << date_index_dict[date])
+                        if date_set_binary not in visited_date_sets_binary:
+                            visited_date_sets_binary.add(date_set_binary)
+                            for item_2 in self.data[SetName.ITEM_BY_SUPPLIER_DICT][supplier]:
+                                for order_2 in self.data[SetName.ORDER_BY_ITEM_DICT][item_2]:
+                                    if month in self.data[SetName.ORDER_TIME_MONTH_DICT][order_2]:
+                                        if set(self.data[SetName.TIME_BY_ORDER_MONTH_DICT][order_2, month]).issubset(set(self.data[SetName.TIME_BY_ORDER_MONTH_DICT][order_1, month])):
+                                            orders_covered_list_by_order_supplier_month_dict[order_1, supplier, month].add(order_2)
+                                        else:
+                                            dates_left_over = set(self.data[SetName.TIME_BY_ORDER_MONTH_DICT][order_2, month]) - set(self.data[SetName.TIME_BY_ORDER_MONTH_DICT][order_1, month])
+                                            capacity_by_supplier = 0
+                                            for date in dates_left_over:
+                                                capacity_by_supplier += min(self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item_2], self.data[ParaName.SUPPLIER_DAILY_MAX_PRODUCTION_DICT][supplier].get(date,self.data[ParaName.ITEM_MAX_OCCUPY_DICT][item_2]))
+                                            if capacity_by_supplier >= self.data[ParaName.ORDER_QUANTITY_DICT][order_2]:
+                                                orders_def_0_by_order_supplier_month_dict[order_1, supplier, month].add(order_2)
+                                            else:
+                                                orders_not_covered_list_by_order_supplier_month_dict[order_1, supplier, month].add(order_2)
+                                                cnt_variable_num = cnt_variable_num+1
+        self.data[SetName.UNCOVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT] = orders_not_covered_list_by_order_supplier_month_dict
+        self.data[SetName.COVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT] = orders_covered_list_by_order_supplier_month_dict
+
 
 

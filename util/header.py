@@ -80,19 +80,19 @@ class ParamsMark:
     IS_RANDOM_DATA = 'is_random_data'                       # 算例为semir真实数据or抽样数据or随机数据
     IS_POOL = 'is_pool'                                     # 是否考虑供应商分池内部均衡
     IS_Z_OSt = 'is_z_ost'                                   # 是否采用z_opt变量
-    ALL_PARAMS_DICT = {IS_RANDOM_DATA: False,
+    ALL_PARAMS_DICT = {IS_RANDOM_DATA: True,
                        MAX_ITERATION: 500,
                        MAX_RUNTIME: 3600,
                        MIP_GAP: 0.001,
-                       CAPACITY_AVERAGE_OBJ: True,
-                       CAPACITY_LADDEL_OBJ: True,
-                       IS_POOL: True,
+                       CAPACITY_AVERAGE_OBJ: False,
+                       CAPACITY_LADDEL_OBJ: False,
+                       IS_POOL: False,
                        ITEM_MULTI_SUPPLIER: False,
-                       MILP_MODEL: 1,  # {0:alpha, 1:beta}
-                       SOLUTION_MODE: 0,  # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
-                       CUT_MODE: 0,  # {0: greedy-mis, 1: dbfs, 2:greedy-cut}
+                       MILP_MODEL: 0,  # {0:alpha, 1:beta}
+                       SOLUTION_MODE: 2,  # {0: 整体模型, 1: LBBD模型, 2: Branch-and-check}
+                       CUT_MODE: 0,     # {0: greedy-mis, 1: dbfs, 2:greedy-cut}
                        IS_LIFT: False,
-                       IS_Z_OSt: False
+                       IS_Z_OSt: False  # {True: z_pst, False: z_osT}
                        }
 
 

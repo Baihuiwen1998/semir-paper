@@ -89,11 +89,11 @@ class GenerateCut:
             is_feasible = relaxed_sub_model.solve(mode=1)
             if is_feasible:
                 # 不可行
-                logger.info("!!!!!!!!!子问题不可行greedy-cut!!!!!!!!!")
-                print('[', end='')
-                for item in T_item_list:
-                    print(str(item), end=',')
-                print(']')
+                # logger.info("!!!!!!!!!子问题不可行greedy-cut!!!!!!!!!")
+                # print('[', end='')
+                # for item in T_item_list:
+                #     print(str(item), end=',')
+                # print(']')
                 return T_item_list
             else:
                 T_item_list.remove(item_selected)
@@ -197,11 +197,11 @@ class GenerateCut:
                     relaxed_sub_model.add_alpha_equals_1_constrains(item)
             if all_feasible or (len(item_list) == 1):
                 # 不可行
-                logger.info("!!!!!!!!!" + "供应商：" + str(sub_model.supplier) + "子问题不可行!!!!!!!!!, is_descending："+str(is_descending))
-                print('[', end='')
-                for item in T_item_list:
-                    print(str(item), end=',')
-                print(']')
+                # logger.info("!!!!!!!!!" + "供应商：" + str(sub_model.supplier) + "子问题不可行!!!!!!!!!, is_descending："+str(is_descending))
+                # print('[', end='')
+                # for item in T_item_list:
+                #     print(str(item), end=',')
+                # print(']')
                 # 去掉所有款式都可行，则说明找到了令supplier 产生不可解的最小款组合方案
                 flag = False
         return T_item_list

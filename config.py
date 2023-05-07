@@ -86,6 +86,8 @@ class SetName:
 
     MACHINE_SUB_SETS_BY_SUPPLIER_DICT = 'machine_sub_sets_by_supplier_dict'
     ITEM_SUB_SETS_BY_SUPPLIER_DICT = 'item_sub_sets_by_supplier_dict'
+    UNCOVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT = 'uncovered_orders_set_by_order_supplier_month_dict'
+    COVERED_ORDERS_SET_BY_ORDER_SUPPLIER_MONTH_DICT = 'covered_orders_set_by_order_supplier_month_dict'
 
 
 class ParaName:
@@ -135,10 +137,10 @@ class VarName:
     SUPPLIER_CAPACITY_RATIO_DELTA = 'supplier_capacity_ratio_delta'
     Z = 'z'
     HAT_Z = '\hat_z'                # 连续变量，\hat_z_{o,s,\hat_t} 表示订单o在供应商s处\hat_t月的产量
-    NU = 'nu'                        # 0-1变量，nu_{m,hat_t}表示是否有\hat_t月产线m可生产款式被分配至该产线所属实体供应商
+    # NU = 'nu'                        # 0-1变量，nu_{m,hat_t}表示是否有\hat_t月产线m可生产款式被分配至该产线所属实体供应商
     KAPPA = 'kappa'                 # 连续变量，表示供应商s在t日的最大产量
-    THETA = 'theta'  # 0-1变量，theta_{p,k}实体供应商第k个不可行的款分配方案是否被选择
-
+    THETA = 'theta'                 # 0-1变量，theta_{p,k}实体供应商第k个不可行的款分配方案是否被选择
+    SIGMA = 'sigma'                 # 连续变量，sigma_{o_1,o_2,p,\hat_t}表示对于工厂plant在月份hat_t订单o_2在o_1生产时间范围内必须生产的产量
     # LAMBDA = 'lambda'  # 0-1变量，lambda_{s, t}表示是否有t日s供应商可生产的款式被分配至该供应商
 
 class ObjName:
